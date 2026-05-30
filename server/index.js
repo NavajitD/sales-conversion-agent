@@ -9,6 +9,10 @@ const url = require('url');
 const { addClient, broadcast } = require('./broadcast');
 const handleSttConnection = require('../agent/sarvam-stt-bridge');
 const handleTtsRequest = require('../agent/sarvam-tts-bridge');
+const keyRotator = require('../llm/keyRotator');
+const handleLlmRequest = require('../llm/proxy');
+
+keyRotator.init();
 
 const app = express();
 app.use(cors());
@@ -48,6 +52,9 @@ app.post('/vapi/tool', (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Custom LLM proxy — Cerebras (priority) → Groq (fallback), with key rotation
+app.post('/llm', handleLlmRequest);
 
 // TTS bridge (Vapi custom voice → Sarvam Bulbul)
 app.post('/tts', handleTtsRequest);

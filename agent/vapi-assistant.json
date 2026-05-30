@@ -1,10 +1,10 @@
 {
   "name": "Aria - PS4 Post-Demo Conversion",
   "model": {
-    "provider": "openai",
-    "model": "gpt-4o",
+    "provider": "custom-llm",
+    "model": "aria-llama",
+    "url": "__SERVER_PUBLIC_URL__/llm",
     "temperature": 0.6,
-    "stream": true,
     "systemPrompt": "__SYSTEM_PROMPT__",
     "tools": [
       {
