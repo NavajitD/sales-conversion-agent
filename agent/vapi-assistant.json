@@ -1,0 +1,90 @@
+{
+  "name": "Aria - PS4 Post-Demo Conversion",
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4o",
+    "temperature": 0.6,
+    "stream": true,
+    "systemPrompt": "__SYSTEM_PROMPT__",
+    "tools": [
+      {
+        "type": "function",
+        "server": {
+          "url": "__SERVER_PUBLIC_URL__/vapi/tool"
+        },
+        "function": {
+          "name": "log_call_state",
+          "description": "Log the agent's read of the current call state after every parent turn. Call it on every turn and finalise at call end.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "utterance": {
+                "type": "string",
+                "description": "what the parent just said, verbatim"
+              },
+              "objection_primary": {
+                "type": "string",
+                "enum": ["price", "comparison", "child_experience", "spouse_deferral", "stalling", "timing", "trust", "logistics", "none"]
+              },
+              "objection_verbatim": {
+                "type": "string",
+                "description": "the parent's exact words for the key objection"
+              },
+              "intent_classification": {
+                "type": "string",
+                "enum": ["positive", "soft_no", "ambiguous", "hard_no"]
+              },
+              "intent_confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "strategy_applied": {
+                "type": "string",
+                "enum": ["payment_plan", "value_roi_reframe", "competitor_differentiation", "second_session_offer", "experience_rediagnosis", "equip_internal_sell", "disambiguation_probe", "cost_of_delay", "social_proof", "accountability_proof", "flexible_scheduling", "direct_close", "graceful_exit"]
+              },
+              "sentiment": {
+                "type": "string",
+                "enum": ["hostile", "cold", "neutral", "warm"]
+              },
+              "final": {
+                "type": "boolean",
+                "description": "true only on the closing call"
+              },
+              "next_step": {
+                "type": "string",
+                "enum": ["enrolled", "second_session_booked", "senior_callback", "nurture_followup", "do_not_call"],
+                "description": "required and non-null when final is true"
+              },
+              "next_step_label": {
+                "type": "string"
+              },
+              "next_step_time": {
+                "type": "string"
+              },
+              "counselor_notes": {
+                "type": "string"
+              }
+            },
+            "required": ["utterance", "intent_classification", "intent_confidence", "sentiment"]
+          }
+        }
+      }
+    ]
+  },
+  "transcriber": {
+    "provider": "custom-transcriber",
+    "server": {
+      "url": "__SERVER_PUBLIC_URL__/stt"
+    }
+  },
+  "voice": {
+    "provider": "custom-voice",
+    "voiceId": "ritu-bulbul-v3",
+    "server": {
+      "url": "__SERVER_PUBLIC_URL__/tts"
+    }
+  },
+  "firstMessage": "Namaste Mr. Sharma, main Aria bol rahi hoon Vedantu se. Aaj Aarav ne Physics ka demo attend kiya tha Ms. Kapoor ke saath. Bas yeh jaanna tha, kaisa laga unhe?",
+  "endCallFunctionEnabled": true
+}
