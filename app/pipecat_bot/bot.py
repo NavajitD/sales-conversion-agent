@@ -31,6 +31,7 @@ from pipecat.frames.frames import (
     LLMContextFrame,
     LLMFullResponseEndFrame,
     LLMTextFrame,
+    FunctionCallResultProperties,
     MetricsFrame,
     TTSAudioRawFrame,
     TTSSpeakFrame,
@@ -471,7 +472,16 @@ async def run_bot(
     # ── Tool handlers ───────────────────────────────────────────────────────
     async def _tool_log_call_state(params):
         await handle_log_call_state(call_ctx, params.arguments)
-        await params.result_callback({"ok": True})
+        # log_call_state is a pure side-effect (analytics) call — the model
+        # already spoke its reply in the SAME turn. Do NOT re-run the LLM on the
+        # result: that second generation was producing a whole extra "reply" per
+        # turn (often romanized, repetitive, or leaking the tool name), which is
+        # what made Priya sound confused and double-text. run_llm=False makes it
+        # exactly one spoken turn per parent turn.
+        await params.result_callback(
+            {"ok": True},
+            properties=FunctionCallResultProperties(run_llm=False),
+        )
 
     async def _tool_schedule_callback(params):
         out = await handle_schedule_callback_request(call_ctx, params.arguments)

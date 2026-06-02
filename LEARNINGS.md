@@ -165,6 +165,22 @@ objection) — but the transcript now comes from the source of truth.
 > If you find yourself rebuilding a transcript from the model's tool calls, stop —
 > the STT already has it.
 
+### Your logging tool was speaking to the customer (every tool result re-runs the LLM)
+**Symptom:** Priya sounded confused and repetitive — re-explaining herself,
+double-texting, sometimes in romanized Hindi, once even narrating a tool name.
+**Root cause:** The agent logs structured state every turn via a `log_call_state`
+tool. By default, when a tool returns, the framework runs the LLM *again* with the
+result — so every turn produced a **second** generation on top of the real reply.
+That second pass, with nothing new to say, drifted: it paraphrased, repeated the
+last question, dropped out of Devanagari, even said "मैं log_call_state call करूंगी"
+out loud. The analytics tool had become a second, worse voice.
+**Fix:** Return the tool result with `run_llm=False`. A pure side-effect tool
+(logging, analytics) should *record and stop*, not provoke another turn. One
+parent turn → one spoken reply.
+> Not every tool result deserves a follow-up turn. A logging call that "talks
+> back" is the model filling silence you accidentally asked it to fill — and
+> models fill silence worse than they answer questions.
+
 ### Voice latency is sacrosanct: every side-channel is fire-and-forget
 The panel fan-out (transcript, sentiment, reasoning) never blocks the voice
 pipeline. Each broadcast is an `asyncio.create_task` with a per-viewer send
