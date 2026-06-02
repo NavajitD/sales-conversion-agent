@@ -308,11 +308,14 @@ async def run_bot(
     llm.register_function("schedule_callback_request", _tool_schedule_callback)
     llm.register_function("end_call", _tool_end_call)
 
-    # Warm greeting spoken instantly without waiting for LLM.
-    # Keep SHORT (~2s) so it finishes before the user says "hello" back.
+    # Warm greeting spoken instantly without waiting for LLM. Built per-call
+    # from the persona so we never address the wrong child (the name/subject
+    # MUST match this parent's demo). Keep it SHORT (~2s).
+    greet_child = (child or {}).get("name") or demo.get("child_name") or "आपके बच्चे"
+    greet_subject = demo.get("subject") or "demo"
     INSTANT_GREETING = (
-        "नमस्ते! मैं Priya, Vedantu से। "
-        "आज Aarav ने हमारा demo attend किया था, कैसा लगा उन्हें?"
+        f"नमस्ते! मैं Priya, Vedantu से। "
+        f"आज {greet_child} ने हमारा {greet_subject} demo attend किया था, कैसा लगा उन्हें?"
     )
 
     messages = [
@@ -365,17 +368,13 @@ async def run_bot(
         if _task_ref[0]:
             await _task_ref[0].queue_frames([TTSSpeakFrame(text=INSTANT_GREETING, append_to_context=False)])
 
-    async def _greeting_timeout():
-        """If no user speech detected in 3s, send greeting automatically."""
-        await asyncio.sleep(3.0)
-        if not _greeting_sent.is_set():
-            logger.info(f"[bot] No user speech in 3s, greeting proactively call_uuid={call_uuid}")
-            # Timeout path — disable absorb since no utterance triggered it
-            latency_logger._absorb_next_transcript = False
-            latency_logger._greeting_callback = None
-            await _send_greeting()
-
-    latency_logger = LatencyLogger(call_uuid, greeting_callback=_send_greeting)
+    # This is an OUTBOUND call — the agent speaks first the moment the parent
+    # picks up. We greet immediately on connect rather than waiting for the
+    # parent to say "hello" (the old 3s timeout was the source of the long
+    # pause before Aria spoke). No greeting_callback → LatencyLogger does NOT
+    # absorb the parent's first utterance, so their opening reply is no longer
+    # dropped from the transcript.
+    latency_logger = LatencyLogger(call_uuid, greeting_callback=None)
 
     pipeline = Pipeline(
         [
@@ -405,8 +404,12 @@ async def run_bot(
     @transport.event_handler("on_client_connected")
     async def _on_connect(transport, client):
         logger.info(f"[bot] Vobiz stream connected call_uuid={call_uuid}")
-        # Start 3s timeout — will greet if user doesn't speak first
-        asyncio.create_task(_greeting_timeout())
+        # Greet right away. A short delay only lets the media stream warm up so
+        # the first syllable isn't clipped — far less than the old 3s wait.
+        async def _greet_now():
+            await asyncio.sleep(0.3)
+            await _send_greeting()
+        asyncio.create_task(_greet_now())
 
     @transport.event_handler("on_client_disconnected")
     async def _on_disconnect(transport, client):
