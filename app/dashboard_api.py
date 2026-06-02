@@ -130,6 +130,37 @@ async def list_parents():
     return {"parents": hydrated}
 
 
+@router.get("/personas")
+async def list_personas():
+    """Lightweight persona list for the public demo picker.
+
+    The picker only needs name/city + the child's name/grade/exam_target, so we
+    skip the expensive per-parent call/objection/callback hydration that
+    `/parents` does (4 Firestore queries each, several of them composite-index
+    `order_by` reads). This is just one `first_child` read per parent, which
+    keeps the picker snappy even on a cold container.
+    """
+    parents: list[dict[str, Any]] = []
+    async for snap in db().collection("parents").stream():
+        p = snap.to_dict() or {}
+        p["id"] = snap.id
+        parents.append(p)
+
+    async def slim(p: dict[str, Any]) -> dict[str, Any]:
+        child = await _first_child_for_parent(p["id"])
+        return {
+            "id": p["id"],
+            "name": p.get("name"),
+            "city": p.get("city"),
+            "child_name": child.get("name") if child else None,
+            "grade": child.get("grade") if child else None,
+            "exam_target": child.get("exam_target") if child else None,
+        }
+
+    personas = await asyncio.gather(*(slim(p) for p in parents))
+    return {"parents": personas}
+
+
 @router.get("/calls")
 async def list_calls():
     """Last 100 call attempts with parent name + latest objection."""
