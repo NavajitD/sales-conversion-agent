@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "aria-crm-2e680"
+  },
+  "targets": {
+    "aria-crm-2e680": {
+      "hosting": {
+        "demo": [
+          "talktoaria"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

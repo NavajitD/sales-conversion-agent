@@ -1,0 +1,865 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Aria EdTech CRM</title>
+    <meta name="description" content="Live monitoring + sentiment analytics + parents, call history, and outcomes for Aria voice agent demos." />
+    <meta name="theme-color" content="#0a1f00" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232563eb'/%3E%3Ctext x='16' y='22' font-family='system-ui,sans-serif' font-size='16' font-weight='700' text-anchor='middle' fill='white'%3EA%3C/text%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://aria-446733252616.asia-south1.run.app" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" /></noscript>
+    <style>
+      :root {
+        --bg: #fafaf9;
+        --fg: #0a1f00;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --accent: #2563eb;
+        --accent-soft: rgba(37, 99, 235, 0.08);
+        --green: #16a34a;
+        --green-soft: rgba(22, 163, 74, 0.1);
+        --red: #dc2626;
+        --red-soft: rgba(220, 38, 38, 0.1);
+        --amber: #d97706;
+        --amber-soft: rgba(217, 119, 6, 0.12);
+        --purple: #7c3aed;
+        --card: #ffffff;
+      }
+      *, *::before, *::after { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+        color: var(--fg);
+        background: var(--bg);
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .container { max-width: 76rem; margin: 0 auto; padding: 2rem 1.25rem; }
+      .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+      .logo { font-weight: 700; letter-spacing: -0.01em; font-size: 1.125rem; }
+      .logo span { color: var(--accent); }
+      .nav a { font-size: 0.875rem; color: var(--muted); margin-left: 1.25rem; }
+      .nav a:hover { color: var(--fg); text-decoration: none; }
+
+      h1 { font-size: 2rem; line-height: 1.15; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 0.4rem; }
+      .lede { color: var(--muted); font-size: 0.95rem; margin: 0 0 1.5rem; }
+
+      .metric-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; margin-bottom: 1.25rem; }
+      .metric { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem 1rem; }
+      .metric-n { font-weight: 700; font-size: 1.6rem; line-height: 1.1; }
+      .metric-l { color: var(--muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 4px; }
+      @media (max-width: 56rem) { .metric-strip { grid-template-columns: repeat(2, 1fr); } }
+
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; }
+      .card h2 { margin: 0 0 0.25rem; font-size: 1.05rem; font-weight: 600; }
+      .card .sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem; }
+      .card h3 { margin: 0 0 0.4rem; font-size: 0.85rem; font-weight: 600; }
+
+      .conn-pill { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.18rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; background: #f1f5f9; color: var(--muted); margin-left: 0.5rem; vertical-align: middle; }
+      .conn-pill .dot { width: 6px; height: 6px; border-radius: 999px; background: #cbd5e1; }
+      .conn-pill.live { background: var(--green-soft); color: var(--green); }
+      .conn-pill.live .dot { background: var(--green); animation: pulse 1.5s ease-in-out infinite; }
+      .conn-pill.err { background: var(--red-soft); color: var(--red); }
+      .conn-pill.err .dot { background: var(--red); }
+      @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+      .sentiment-row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.75rem; }
+      .confidence-bar { position: relative; flex: 1; min-width: 12rem; height: 1.65rem; background: #f1f5f9; border-radius: 8px; overflow: hidden; }
+      .confidence-fill { position: absolute; inset: 0; width: 0%; transition: width 0.4s ease, background-color 0.3s; background: var(--accent); }
+      .confidence-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 0.7rem; font-size: 0.78rem; font-weight: 600; color: white; mix-blend-mode: difference; text-shadow: 0 0 2px rgba(0,0,0,0.4); }
+      .confidence-fill.s-yes      { background: var(--green); }
+      .confidence-fill.s-soft-no  { background: var(--amber); }
+      .confidence-fill.s-hard-no  { background: var(--red); }
+      .confidence-fill.s-neutral  { background: #94a3b8; }
+      .tone-pill { display: inline-flex; align-items: center; padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.78rem; font-weight: 600; background: rgba(124, 58, 237, 0.1); color: var(--purple); white-space: nowrap; }
+      .tone-pill.empty { background: #f1f5f9; color: var(--muted); }
+      .reason-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 0.85rem; margin-bottom: 0.5rem; font-size: 0.88rem; }
+      .reason-box.empty { color: var(--muted); font-style: italic; }
+      .reason-box .label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 0.15rem; }
+      .reason-box.parent { border-left: 3px solid var(--amber); }
+      .reason-box.agent  { border-left: 3px solid var(--green); }
+      .reason-box.conv-parent { border-left: 3px solid var(--green); }
+      .reason-box.conv-agent  { border-left: 3px solid var(--accent); }
+
+      .transcript { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.76rem; line-height: 1.55; max-height: 16rem; overflow-y: auto; padding-right: 0.5rem; }
+      .transcript-empty { color: var(--muted); font-style: italic; padding: 0.5rem 0; font-family: inherit; font-size: 0.85rem; }
+      .transcript-turn { padding: 0.35rem 0; border-bottom: 1px dashed var(--border); }
+      .transcript-turn:last-child { border-bottom: none; }
+      .transcript-who { font-weight: 700; color: var(--muted); margin-right: 0.5rem; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em; }
+      .transcript-who.agent { color: var(--accent); }
+      .transcript-who.parent { color: var(--amber); }
+
+      .analytics-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+      @media (max-width: 64rem) { .analytics-grid { grid-template-columns: 1fr; } }
+      .pie-wrap { display: flex; align-items: center; justify-content: center; flex-direction: column; position: relative; }
+      .pie-svg { width: 9rem; height: 9rem; }
+      .pie-legend { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.5rem; font-size: 0.78rem; width: 100%; }
+      .pie-legend-row { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; }
+      .pie-swatch { width: 0.7rem; height: 0.7rem; border-radius: 3px; display: inline-block; vertical-align: middle; margin-right: 0.4rem; }
+      .pie-callout { position: absolute; background: var(--fg); color: white; padding: 0.25rem 0.55rem; border-radius: 6px; font-size: 0.72rem; font-weight: 600; pointer-events: none; opacity: 0; transition: opacity 0.15s; white-space: nowrap; transform: translate(-50%, -120%); z-index: 10; }
+      .pie-callout.show { opacity: 1; }
+
+      .rank-list { list-style: none; padding: 0; margin: 0; }
+      .rank-list li { display: flex; justify-content: space-between; padding: 0.35rem 0; border-bottom: 1px dashed var(--border); font-size: 0.85rem; }
+      .rank-list li:last-child { border-bottom: none; }
+      .rank-pct { color: var(--muted); font-variant-numeric: tabular-nums; font-weight: 500; }
+      .rank-pct.green { color: var(--green); }
+
+      .below-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+      @media (max-width: 56rem) { .below-row { grid-template-columns: 1fr; } }
+      .conf-card { background: #f8fafc; border-radius: 10px; padding: 0.85rem 1rem; border: 1px solid var(--border); }
+      .conf-card h4 { font-size: 0.78rem; color: var(--muted); margin: 0 0 0.4rem; text-transform: uppercase; letter-spacing: 0.04em; }
+      .agent-conf-bar { position: relative; height: 1.45rem; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+      .agent-conf-fill { position: absolute; inset: 0; width: 0%; background: var(--accent); transition: width 0.4s ease; }
+      .agent-conf-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 700; color: white; mix-blend-mode: difference; text-shadow: 0 0 2px rgba(0,0,0,0.4); }
+
+      .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
+      .tab { background: none; border: none; padding: 0.7rem 1.2rem; cursor: pointer; font-family: inherit; font-size: 0.9rem; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+      .tab:hover { color: var(--fg); }
+      .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+      .tab-panel { display: none; }
+      .tab-panel.active { display: block; }
+
+      table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+      th, td { text-align: left; padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--border); }
+      th { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 600; }
+      tr.row-clickable { cursor: pointer; }
+      tr.row-clickable:hover { background: var(--accent-soft); }
+      .pill { display: inline-block; padding: 0.18rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+      .pill.completed { background: var(--green-soft); color: var(--green); }
+      .pill.in-progress { background: var(--accent-soft); color: var(--accent); }
+      .pill.failed { background: var(--red-soft); color: var(--red); }
+      .pill.cancelled { background: #f1f5f9; color: var(--muted); }
+
+      .arc-row { background: #fcfcfd; }
+      .arc-cell { padding: 1rem 1.2rem !important; }
+      .arc-svg { width: 100%; height: 60px; }
+      .arc-list { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.72rem; max-height: 16rem; overflow-y: auto; margin-top: 0.75rem; }
+      .arc-list .arc-turn { padding: 0.3rem 0; border-bottom: 1px dashed var(--border); }
+      .arc-list .arc-turn:last-child { border-bottom: none; }
+
+      .modal { position: fixed; inset: 0; background: rgba(10, 31, 0, 0.55); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; padding: 1rem; z-index: 50; }
+      .modal.show { display: flex; }
+      .modal-card { background: white; border-radius: 14px; max-width: 28rem; width: 100%; padding: 1.5rem; box-shadow: 0 24px 64px rgba(0,0,0,0.15); }
+      .modal-card h3 { margin: 0 0 0.5rem; font-size: 1.05rem; font-weight: 700; }
+      .modal-card p { color: var(--muted); font-size: 0.88rem; margin: 0 0 1rem; }
+      .modal-row { display: flex; gap: 0.5rem; }
+      .input { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.95rem; font-family: inherit; }
+      .input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+      .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.95rem; border-radius: 8px; border: none; font-family: inherit; font-weight: 600; font-size: 0.88rem; cursor: pointer; transition: opacity 0.15s; }
+      .btn-primary { background: var(--accent); color: white; }
+      .btn-primary:hover:not(:disabled) { opacity: 0.92; }
+      .btn-secondary { background: #f1f5f9; color: var(--fg); }
+      .btn-secondary:hover { background: #e2e8f0; }
+      .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      .modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem; }
+      .modal-banner { font-size: 0.85rem; padding: 0.6rem 0.8rem; border-radius: 8px; margin-top: 0.6rem; display: none; }
+      .modal-banner.show { display: block; }
+      .modal-banner.ok { background: var(--green-soft); color: var(--green); }
+      .modal-banner.err { background: var(--red-soft); color: var(--red); }
+
+      footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <div class="logo">Aria<span>.</span> CRM</div>
+        <nav class="nav">
+          <a href="/">← Back to demo</a>
+        </nav>
+      </header>
+
+      <h1>Live monitoring CRM</h1>
+      <p class="lede">Active calls, sentiment analytics, parents, history, and outcomes.</p>
+
+      <div class="metric-strip">
+        <div class="metric"><div class="metric-n" id="mTotal">—</div><div class="metric-l">Calls initiated</div></div>
+        <div class="metric"><div class="metric-n" id="mCompleted">—</div><div class="metric-l">Completed</div></div>
+        <div class="metric"><div class="metric-n" id="mConv">—</div><div class="metric-l">Conversion</div></div>
+        <div class="metric"><div class="metric-n" id="mDur">—</div><div class="metric-l">Avg duration</div></div>
+        <div class="metric"><div class="metric-n" id="mActive">—</div><div class="metric-l">Active now</div></div>
+      </div>
+
+      <div class="card">
+        <h2>
+          Live monitor
+          <span class="conn-pill" id="connPill"><span class="dot"></span><span id="connTxt">Idle</span></span>
+        </h2>
+        <div class="sub" id="liveSub">No active call. Showing the most recent panel events.</div>
+        <div class="sentiment-row">
+          <div class="confidence-bar">
+            <div class="confidence-fill s-neutral" id="confFill"></div>
+            <div class="confidence-label">
+              <span id="confSentiment">—</span>
+              <span id="confPct">—</span>
+            </div>
+          </div>
+          <div class="tone-pill empty" id="tonePill">Tone: —</div>
+        </div>
+        <div class="reason-box empty" id="reasonBox">
+          <div class="label" id="reasonLabel">Reason</div>
+          <div class="body" id="reasonBody">Waiting for the parent's response…</div>
+        </div>
+        <div class="reason-box empty" id="responseBox">
+          <div class="label" id="responseLabel">Response</div>
+          <div class="body" id="responseBody">Aria's response will appear here.</div>
+        </div>
+        <div class="transcript" id="transcript">
+          <div class="transcript-empty">Transcript will stream here when a call connects.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Sentiment &amp; objections</h2>
+        <div class="sub">Aggregated across the last 1000 turns.</div>
+        <div class="analytics-grid">
+          <div class="pie-wrap">
+            <svg class="pie-svg" id="pieSvg" viewBox="-1.1 -1.1 2.2 2.2" aria-label="Yes / Soft No / Hard No pie chart">
+              <circle r="1" cx="0" cy="0" fill="#f1f5f9"/>
+            </svg>
+            <div class="pie-callout" id="pieCallout"></div>
+            <div class="pie-legend">
+              <div class="pie-legend-row"><span><span class="pie-swatch" style="background:var(--green)"></span>Yes</span><span id="pieYes">0</span></div>
+              <div class="pie-legend-row"><span><span class="pie-swatch" style="background:var(--amber)"></span>Soft No</span><span id="pieSoftNo">0</span></div>
+              <div class="pie-legend-row"><span><span class="pie-swatch" style="background:var(--red)"></span>Hard No</span><span id="pieHardNo">0</span></div>
+            </div>
+          </div>
+
+          <div>
+            <h3>Top objections — Soft No</h3>
+            <ul class="rank-list" id="softNoObjections"><li class="transcript-empty">No data yet.</li></ul>
+            <h3 style="margin-top: 0.85rem">Top objections — Hard No</h3>
+            <ul class="rank-list" id="hardNoObjections"><li class="transcript-empty">No data yet.</li></ul>
+          </div>
+
+          <div>
+            <h3>Top successful strategies</h3>
+            <ul class="rank-list" id="topStrategies"><li class="transcript-empty">No data yet.</li></ul>
+          </div>
+        </div>
+
+        <div class="below-row">
+          <div class="conf-card">
+            <h4>Sentiment-analysis confidence</h4>
+            <div class="agent-conf-bar">
+              <div class="agent-conf-fill" id="confidenceFill"></div>
+              <div class="agent-conf-label" id="confidenceLabel">—</div>
+            </div>
+            <p style="font-size: 0.74rem; color: var(--muted); margin: 0.4rem 0 0">Mean confidence on Soft / Hard No classifying turns.</p>
+          </div>
+          <div class="conf-card" id="ragCard" style="display:none">
+            <h4>Next retraining</h4>
+            <div id="ragInfo" style="font-size: 0.88rem"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-tab="parents" role="tab">Parents</button>
+          <button class="tab" data-tab="calls" role="tab">Call History</button>
+          <button class="tab" data-tab="outcomes" role="tab">Outcomes</button>
+        </div>
+
+        <div class="tab-panel active" data-tab="parents">
+          <p class="sub">Seeded personas. Use <strong>Call now</strong> to trigger a call to the number you enter.</p>
+          <table>
+            <thead>
+              <tr><th>Parent</th><th>Child</th><th>Grade</th><th>City</th><th>Last call</th><th></th></tr>
+            </thead>
+            <tbody id="parentsTbody"><tr><td colspan="6" class="transcript-empty">Loading…</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="tab-panel" data-tab="calls">
+          <p class="sub">Click a row to see its sentiment arc and per-turn detail.</p>
+          <table>
+            <thead>
+              <tr><th>When</th><th>Parent</th><th>Status</th><th>Objection</th><th>Outcome</th><th>Duration</th></tr>
+            </thead>
+            <tbody id="callsTbody"><tr><td colspan="6" class="transcript-empty">Loading…</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="tab-panel" data-tab="outcomes">
+          <p class="sub">Conversions, callbacks scheduled, and re-demos lined up.</p>
+          <div style="display:grid; grid-template-columns: 1fr; gap: 1.25rem">
+            <div>
+              <h3>Conversions</h3>
+              <table>
+                <thead><tr><th>When</th><th>Parent</th><th>Step</th></tr></thead>
+                <tbody id="convTbody"><tr><td colspan="3" class="transcript-empty">Loading…</td></tr></tbody>
+              </table>
+            </div>
+            <div>
+              <h3>Callbacks scheduled</h3>
+              <table>
+                <thead><tr><th>Scheduled for</th><th>Parent</th><th>Reason</th><th>Attempts</th></tr></thead>
+                <tbody id="cbTbody"><tr><td colspan="4" class="transcript-empty">Loading…</td></tr></tbody>
+              </table>
+            </div>
+            <div>
+              <h3>Re-demos scheduled</h3>
+              <table>
+                <thead><tr><th>Scheduled for</th><th>Parent</th><th>Notes</th></tr></thead>
+                <tbody id="redemoTbody"><tr><td colspan="3" class="transcript-empty">No re-demos yet.</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        © 2026 Navajit D · <a href="/">Back to demo</a>
+      </footer>
+    </div>
+
+    <div class="modal" id="callModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-card">
+        <h3 id="modalTitle">Trigger call</h3>
+        <p id="modalDesc">Enter the number to dial. Aria will roleplay with the persona you picked.</p>
+        <div class="modal-row">
+          <input id="modalPhone" class="input" type="tel" placeholder="+91 98XXXXXXXX" inputmode="tel" />
+          <button class="btn btn-primary" id="modalCallBtn">Call</button>
+        </div>
+        <div class="modal-banner" id="modalBanner" role="status" aria-live="polite"></div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="modalCancelBtn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const REST_BASE = '';
+      const WS_BASE = 'wss://aria-446733252616.asia-south1.run.app';
+
+      let ws = null;
+      let lastAgentUtterance = '';
+      let modalPersonaId = null;
+      let modalPersonaName = '';
+
+      function clamp01(n) { return Math.max(0, Math.min(1, n)); }
+      function escapeHtml(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      }
+      function fmtAgo(iso) {
+        if (!iso) return '—';
+        const t = new Date(iso).getTime();
+        if (!Number.isFinite(t)) return '—';
+        const diff = Date.now() - t;
+        if (diff < 60_000) return Math.max(1, Math.round(diff / 1000)) + 's ago';
+        if (diff < 3_600_000) return Math.round(diff / 60_000) + 'm ago';
+        if (diff < 86_400_000) return Math.round(diff / 3_600_000) + 'h ago';
+        return Math.round(diff / 86_400_000) + 'd ago';
+      }
+      function fmtScheduled(iso) {
+        if (!iso) return '—';
+        const d = new Date(iso);
+        if (!Number.isFinite(d.getTime())) return iso;
+        return d.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+      }
+
+      function setConn(state) {
+        const pill = document.getElementById('connPill');
+        const txt = document.getElementById('connTxt');
+        pill.classList.remove('live', 'err');
+        if (state === 'live') { pill.classList.add('live'); txt.textContent = 'Live'; }
+        else if (state === 'err') { pill.classList.add('err'); txt.textContent = 'Offline'; }
+        else if (state === 'connecting') { txt.textContent = 'Connecting'; }
+        else { txt.textContent = 'Idle'; }
+      }
+      function sentimentBucket(event) {
+        const ic = (event.intent_classification || '').toLowerCase();
+        if (ic.includes('hard_no') || ic === 'no_interest') return { key: 'hard-no', label: 'Hard No' };
+        if (ic.includes('soft_no') || ic.includes('objection')) return { key: 'soft-no', label: 'Soft No' };
+        if (ic === 'positive' || ic === 'enrolled' || ic === 'second_session' || ic === 'callback') return { key: 'yes', label: 'Yes' };
+        return { key: 'neutral', label: ic || '—' };
+      }
+      function appendTranscript(who, text) {
+        const t = document.getElementById('transcript');
+        const empty = t.querySelector('.transcript-empty');
+        if (empty) empty.remove();
+        const div = document.createElement('div');
+        div.className = 'transcript-turn';
+        div.innerHTML = `<span class="transcript-who ${who}">${who === 'agent' ? 'Aria' : 'Parent'}</span><span class="transcript-text">${escapeHtml(text)}</span>`;
+        t.appendChild(div);
+        t.scrollTop = t.scrollHeight;
+      }
+      function applyLiveEvent(event) {
+        const bucket = sentimentBucket(event);
+        const conf = clamp01(Number(event.intent_confidence) || 0);
+        const fill = document.getElementById('confFill');
+        fill.style.width = (conf * 100).toFixed(0) + '%';
+        fill.className = 'confidence-fill s-' + bucket.key;
+        document.getElementById('confSentiment').textContent = bucket.label;
+        document.getElementById('confPct').textContent = (conf * 100).toFixed(0) + '%';
+
+        const tone = (event.tone || '').trim();
+        const tp = document.getElementById('tonePill');
+        if (tone) { tp.textContent = 'Tone: ' + tone; tp.classList.remove('empty'); }
+        else { tp.textContent = 'Tone: —'; tp.classList.add('empty'); }
+
+        const rbox = document.getElementById('reasonBox');
+        const rlbl = document.getElementById('reasonLabel');
+        const rbod = document.getElementById('reasonBody');
+        const sbox = document.getElementById('responseBox');
+        const slbl = document.getElementById('responseLabel');
+        const sbod = document.getElementById('responseBody');
+
+        if (bucket.key === 'yes') {
+          rlbl.textContent = 'Approval reason';
+          slbl.textContent = 'Conclusion';
+          rbox.className = 'reason-box conv-parent'; sbox.className = 'reason-box conv-agent';
+          rbod.textContent = event.objection_verbatim || event.utterance || 'Parent agreed.';
+          sbod.textContent = event.next_step_label || event.next_step || event.counselor_notes || 'Aria moved to close.';
+        } else if (bucket.key === 'soft-no' || bucket.key === 'hard-no') {
+          rlbl.textContent = 'Objection reason (parent)';
+          slbl.textContent = 'Response (Aria)';
+          rbox.className = 'reason-box parent'; sbox.className = 'reason-box agent';
+          rbod.textContent = event.objection_verbatim || (event.objection_primary && event.objection_primary !== 'none' ? event.objection_primary : (event.utterance || '—'));
+          const resp = event.strategy_applied && event.strategy_applied !== 'none'
+            ? `[${event.strategy_applied}] ${lastAgentUtterance || ''}`.trim()
+            : (lastAgentUtterance || event.counselor_notes || 'Aria replied.');
+          sbod.textContent = resp;
+        } else {
+          rlbl.textContent = 'Reason'; slbl.textContent = 'Response';
+          if (event.utterance) { rbox.className = 'reason-box parent'; rbod.textContent = event.utterance; }
+          if (lastAgentUtterance) { sbox.className = 'reason-box agent'; sbod.textContent = lastAgentUtterance; }
+        }
+
+        if (event.utterance) appendTranscript('parent', event.utterance);
+        document.getElementById('liveSub').textContent = 'Streaming live events.';
+      }
+      function connectPanel() {
+        if (ws && (ws.readyState === 0 || ws.readyState === 1)) return;
+        setConn('connecting');
+        try { ws = new WebSocket(WS_BASE + '/panel'); }
+        catch (e) { setConn('err'); return; }
+        ws.onopen = () => { setConn('live'); document.getElementById('liveSub').textContent = 'Listening for the next active call…'; };
+        ws.onmessage = (ev) => {
+          let payload; try { payload = JSON.parse(ev.data); } catch { return; }
+          if (payload && payload.kind === 'agent_speech' && payload.text) {
+            lastAgentUtterance = payload.text;
+            appendTranscript('agent', payload.text);
+            return;
+          }
+          applyLiveEvent(payload);
+        };
+        ws.onerror = () => setConn('err');
+        ws.onclose = () => setConn('err');
+      }
+
+      function renderPie(buckets) {
+        const svg = document.getElementById('pieSvg');
+        const callout = document.getElementById('pieCallout');
+        svg.innerHTML = '<circle r="1" cx="0" cy="0" fill="#f1f5f9"/>';
+        const yes = buckets.yes || 0, soft = buckets.soft_no || 0, hard = buckets.hard_no || 0;
+        const total = yes + soft + hard;
+        document.getElementById('pieYes').textContent = yes;
+        document.getElementById('pieSoftNo').textContent = soft;
+        document.getElementById('pieHardNo').textContent = hard;
+        if (total === 0) return;
+        const slices = [
+          { label: 'Yes',     n: yes,  color: '#16a34a' },
+          { label: 'Soft No', n: soft, color: '#d97706' },
+          { label: 'Hard No', n: hard, color: '#dc2626' },
+        ];
+        let startAngle = -Math.PI / 2;
+        slices.forEach(s => {
+          if (!s.n) return;
+          const sweep = (s.n / total) * 2 * Math.PI;
+          const endAngle = startAngle + sweep;
+          const x1 = Math.cos(startAngle), y1 = Math.sin(startAngle);
+          const x2 = Math.cos(endAngle),   y2 = Math.sin(endAngle);
+          const largeArc = sweep > Math.PI ? 1 : 0;
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          const d = `M 0 0 L ${x1.toFixed(4)} ${y1.toFixed(4)} A 1 1 0 ${largeArc} 1 ${x2.toFixed(4)} ${y2.toFixed(4)} Z`;
+          path.setAttribute('d', d);
+          path.setAttribute('fill', s.color);
+          path.style.cursor = 'pointer';
+          path.style.transition = 'opacity 0.15s';
+          const pct = (s.n / total * 100).toFixed(1);
+          path.addEventListener('mouseenter', () => {
+            path.style.opacity = '0.8';
+            callout.textContent = `${s.label} — ${s.n} (${pct}%)`;
+            callout.classList.add('show');
+          });
+          path.addEventListener('mousemove', (e) => {
+            const wrapRect = svg.parentElement.getBoundingClientRect();
+            callout.style.left = (e.clientX - wrapRect.left) + 'px';
+            callout.style.top  = (e.clientY - wrapRect.top) + 'px';
+          });
+          path.addEventListener('mouseleave', () => {
+            path.style.opacity = '1';
+            callout.classList.remove('show');
+          });
+          svg.appendChild(path);
+          startAngle = endAngle;
+        });
+      }
+
+      function renderObjectionsForBucket(elId, rejectionReasons, intent) {
+        const ul = document.getElementById(elId);
+        const filtered = (rejectionReasons || []).filter(r => r.intent_classification === intent);
+        if (!filtered.length) { ul.innerHTML = '<li class="transcript-empty">No data yet.</li>'; return; }
+        const total = filtered.reduce((s, r) => s + r.n, 0);
+        ul.innerHTML = filtered.slice(0, 5).map(r => `
+          <li><span>${escapeHtml(r.objection_primary || '—')}</span><span class="rank-pct">${((r.n / total) * 100).toFixed(0)}%</span></li>
+        `).join('');
+      }
+
+      function renderStrategies(rows) {
+        const ul = document.getElementById('topStrategies');
+        if (!rows || !rows.length) { ul.innerHTML = '<li class="transcript-empty">No data yet.</li>'; return; }
+        ul.innerHTML = rows.slice(0, 5).map(r => `
+          <li>
+            <span>${escapeHtml(r.strategy_applied || '—')}</span>
+            <span class="rank-pct green">${Number(r.conversion_rate || 0).toFixed(0)}%</span>
+          </li>
+        `).join('');
+      }
+
+      function renderConfidence(avg) {
+        const fill = document.getElementById('confidenceFill');
+        const lbl = document.getElementById('confidenceLabel');
+        const v = Number(avg);
+        if (Number.isFinite(v) && v > 0) {
+          const pct = Math.round(clamp01(v) * 100);
+          fill.style.width = pct + '%';
+          lbl.textContent = pct + '%';
+        } else {
+          fill.style.width = '0%';
+          lbl.textContent = 'No data yet';
+        }
+      }
+
+      async function loadAnalytics() {
+        try {
+          const r = await fetch(REST_BASE + '/api/dashboard/analytics');
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const a = await r.json();
+          document.getElementById('mTotal').textContent = a.total_calls ?? 0;
+          document.getElementById('mCompleted').textContent = a.completed_calls ?? 0;
+          document.getElementById('mConv').textContent = (a.conversion_rate ?? 0) + '%';
+          document.getElementById('mDur').textContent = (a.avg_duration_seconds ?? 0) + 's';
+          renderPie(a.sentiment_buckets || {});
+          renderObjectionsForBucket('softNoObjections', a.rejection_reasons, 'soft_no');
+          renderObjectionsForBucket('hardNoObjections', a.rejection_reasons, 'hard_no');
+          renderStrategies(a.top_strategies_with_rate);
+          renderConfidence(a.avg_intent_confidence);
+        } catch {}
+      }
+
+      async function loadLive() {
+        try {
+          const r = await fetch(REST_BASE + '/api/dashboard/live');
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const j = await r.json();
+          document.getElementById('mActive').textContent = (j.active && j.active.length) || 0;
+        } catch {}
+      }
+
+      let allParents = [];
+      async function loadParents() {
+        const tb = document.getElementById('parentsTbody');
+        try {
+          const r = await fetch(REST_BASE + '/api/dashboard/parents');
+          const j = await r.json();
+          allParents = j.parents || [];
+          if (!allParents.length) { tb.innerHTML = '<tr><td colspan="6" class="transcript-empty">No personas.</td></tr>'; return; }
+          tb.innerHTML = allParents.map(p => `
+            <tr>
+              <td><strong>${escapeHtml(p.name)}</strong><br><span style="color:var(--muted);font-size:0.78rem">${escapeHtml(p.phone || '')}</span></td>
+              <td>${escapeHtml(p.child_name || '—')}</td>
+              <td>${escapeHtml(p.grade || '—')}</td>
+              <td>${escapeHtml(p.city || '—')}</td>
+              <td>${p.last_call_status ? `<span class="pill ${escapeHtml(p.last_call_status)}">${escapeHtml(p.last_call_status)}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
+              <td><button class="btn btn-primary" data-persona="${escapeHtml(p.id)}" data-name="${escapeHtml(p.name)}">Call now</button></td>
+            </tr>
+          `).join('');
+          tb.querySelectorAll('button[data-persona]').forEach(b => {
+            b.addEventListener('click', () => openModal(b.dataset.persona, b.dataset.name));
+          });
+        } catch (e) {
+          tb.innerHTML = '<tr><td colspan="6" class="transcript-empty">Could not load parents (' + e.message + ').</td></tr>';
+        }
+      }
+
+      const expandedRows = new Set();
+      async function loadCalls() {
+        const tb = document.getElementById('callsTbody');
+        try {
+          const r = await fetch(REST_BASE + '/api/dashboard/calls');
+          const j = await r.json();
+          const calls = j.calls || [];
+          if (!calls.length) { tb.innerHTML = '<tr><td colspan="6" class="transcript-empty">No calls yet.</td></tr>'; return; }
+          tb.innerHTML = calls.map(c => `
+            <tr class="row-clickable" data-call="${escapeHtml(c.id)}">
+              <td>${fmtAgo(c.started_at)}<br><span style="color:var(--muted);font-size:0.72rem">${escapeHtml((c.id || '').slice(0, 8))}</span></td>
+              <td>${escapeHtml(c.parent_name || '—')}<br><span style="color:var(--muted);font-size:0.78rem">${escapeHtml(c.phone || '')}</span></td>
+              <td><span class="pill ${escapeHtml(c.status || '')}">${escapeHtml(c.status || '—')}</span></td>
+              <td>${escapeHtml(c.objection_primary || '—')}</td>
+              <td>${escapeHtml(c.next_step || '—')}</td>
+              <td>${c.duration_seconds ? c.duration_seconds + 's' : '—'}</td>
+            </tr>
+          `).join('');
+          tb.querySelectorAll('tr.row-clickable').forEach(tr => {
+            tr.addEventListener('click', () => toggleCallExpansion(tr));
+          });
+        } catch (e) {
+          tb.innerHTML = '<tr><td colspan="6" class="transcript-empty">Could not load calls (' + e.message + ').</td></tr>';
+        }
+      }
+      async function toggleCallExpansion(tr) {
+        const id = tr.dataset.call;
+        if (expandedRows.has(id)) {
+          expandedRows.delete(id);
+          const next = tr.nextElementSibling;
+          if (next && next.classList.contains('arc-row')) next.remove();
+          return;
+        }
+        expandedRows.add(id);
+        const arc = document.createElement('tr');
+        arc.className = 'arc-row';
+        arc.innerHTML = `<td colspan="6" class="arc-cell"><div class="transcript-empty">Loading turns…</div></td>`;
+        tr.insertAdjacentElement('afterend', arc);
+        try {
+          const r = await fetch(REST_BASE + '/api/dashboard/calls/' + encodeURIComponent(id) + '/turns');
+          const j = await r.json();
+          const turns = j.turns || [];
+          arc.firstElementChild.innerHTML = renderArc(turns) + renderArcList(turns);
+        } catch (e) {
+          arc.firstElementChild.innerHTML = '<div class="transcript-empty">Could not load turns.</div>';
+        }
+      }
+      function renderArc(turns) {
+        if (!turns.length) return '<div class="transcript-empty">No turns recorded.</div>';
+        const w = 100, h = 60;
+        const pts = turns.map((t, i) => {
+          const x = (i / Math.max(turns.length - 1, 1)) * w;
+          const bucket = (t.intent_classification || '').toLowerCase();
+          const y = bucket.includes('positive') || bucket === 'enrolled' ? 8
+                  : bucket.includes('hard_no') ? h - 8
+                  : bucket.includes('soft_no') ? h * 0.65
+                  : h * 0.45;
+          return { x, y, intent: t.intent_classification };
+        });
+        const linePath = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ');
+        const dots = pts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.4" fill="${p.intent && p.intent.includes('hard_no') ? '#dc2626' : p.intent && p.intent.includes('soft_no') ? '#d97706' : (p.intent === 'positive' ? '#16a34a' : '#94a3b8')}"/>`).join('');
+        return `<div><strong style="font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em">Sentiment arc</strong></div>
+                <svg class="arc-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+                  <line x1="0" y1="${h*0.45}" x2="${w}" y2="${h*0.45}" stroke="#e5e7eb" stroke-dasharray="2 2" />
+                  <path d="${linePath}" stroke="#2563eb" stroke-width="1.4" fill="none" />
+                  ${dots}
+                </svg>`;
+      }
+      function renderArcList(turns) {
+        if (!turns.length) return '';
+        return '<div class="arc-list">' + turns.map(t => {
+          const intent = t.intent_classification ? `<span style="color:var(--accent);font-weight:600">${escapeHtml(t.intent_classification)}</span>` : '';
+          const conf = t.intent_confidence ? ` <span style="color:var(--muted)">${Math.round(Number(t.intent_confidence) * 100)}%</span>` : '';
+          const obj = t.objection_primary && t.objection_primary !== 'none' ? ` · <span style="color:var(--amber)">${escapeHtml(t.objection_primary)}</span>` : '';
+          const strat = t.strategy_applied && t.strategy_applied !== 'none' ? ` · <span style="color:var(--green)">${escapeHtml(t.strategy_applied)}</span>` : '';
+          const utt = t.utterance ? `<div style="margin-top:2px;font-style:italic;color:var(--fg)">"${escapeHtml(t.utterance)}"</div>` : '';
+          return `<div class="arc-turn">${intent}${conf}${obj}${strat}${utt}</div>`;
+        }).join('') + '</div>';
+      }
+
+      async function loadOutcomes() {
+        const cb = document.getElementById('cbTbody');
+        const cv = document.getElementById('convTbody');
+        const rd = document.getElementById('redemoTbody');
+
+        try {
+          const r = await fetch(REST_BASE + '/api/dashboard/callbacks');
+          const j = await r.json();
+          const pending = (j.pending || []);
+          if (!pending.length) cb.innerHTML = '<tr><td colspan="4" class="transcript-empty">No pending callbacks.</td></tr>';
+          else cb.innerHTML = pending.map(p => `
+            <tr>
+              <td>${fmtScheduled(p.scheduled_at)}</td>
+              <td>${escapeHtml(p.parent_name || p.parent_id || '—')}</td>
+              <td>${escapeHtml(p.reason || '—')}</td>
+              <td>${p.attempts_so_far ?? 0}</td>
+            </tr>`).join('');
+        } catch { cb.innerHTML = '<tr><td colspan="4" class="transcript-empty">Could not load.</td></tr>'; }
+
+        try {
+          const r = await fetch(REST_BASE + '/api/dashboard/calls');
+          const j = await r.json();
+          const convs = (j.calls || []).filter(c => c.next_step === 'enrolled');
+          if (!convs.length) cv.innerHTML = '<tr><td colspan="3" class="transcript-empty">No conversions yet.</td></tr>';
+          else cv.innerHTML = convs.map(c => `
+            <tr>
+              <td>${fmtAgo(c.started_at)}</td>
+              <td>${escapeHtml(c.parent_name || '—')}<br><span style="color:var(--muted);font-size:0.78rem">${escapeHtml(c.phone || '')}</span></td>
+              <td>${escapeHtml(c.next_step || 'enrolled')}</td>
+            </tr>`).join('');
+          const redemos = (j.calls || []).filter(c => c.next_step === 'second_session_booked');
+          if (!redemos.length) rd.innerHTML = '<tr><td colspan="3" class="transcript-empty">No re-demos scheduled.</td></tr>';
+          else rd.innerHTML = redemos.map(c => `
+            <tr>
+              <td>${fmtAgo(c.started_at)}</td>
+              <td>${escapeHtml(c.parent_name || '—')}</td>
+              <td>—</td>
+            </tr>`).join('');
+        } catch { cv.innerHTML = '<tr><td colspan="3" class="transcript-empty">Could not load.</td></tr>'; }
+      }
+
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          const name = tab.dataset.tab;
+          document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
+          document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.tab === name));
+          if (name === 'calls') loadCalls();
+          else if (name === 'outcomes') loadOutcomes();
+        });
+      });
+
+      function openModal(personaId, personaName) {
+        modalPersonaId = personaId; modalPersonaName = personaName;
+        document.getElementById('modalDesc').textContent = `Aria will roleplay calling ${personaName}. Enter the number Aria should dial.`;
+        document.getElementById('modalBanner').className = 'modal-banner';
+        document.getElementById('modalPhone').value = '';
+        document.getElementById('callModal').classList.add('show');
+        setTimeout(() => document.getElementById('modalPhone').focus(), 50);
+      }
+      function closeModal() { document.getElementById('callModal').classList.remove('show'); }
+      document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
+      document.getElementById('callModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('callModal')) closeModal();
+      });
+
+      function normalisePhone(raw) {
+        let p = (raw || '').trim().replace(/[\s\-\(\)]/g, '');
+        if (!p) return ''; if (!p.startsWith('+')) p = '+' + p.replace(/^0+/, '');
+        return p;
+      }
+      function isValidE164(p) { return /^\+[1-9]\d{6,14}$/.test(p); }
+
+      // Client-side rate-limit nudge. Mirrors the server cap:
+      //   privileged (build owner): 5/hour + 25/24h
+      //   everyone else:            5/24h
+      // Server is still the source of truth — this is just UX.
+      const PRIVILEGED = new Set(['+916009498752']);
+      function clientRateOk(phone) {
+        const key = 'aria_rl_' + phone;
+        const now = Date.now();
+        const HOUR = 3600_000, DAY = 86_400_000;
+        const privileged = PRIVILEGED.has(phone);
+        const HOUR_LIMIT = 5;
+        const DAY_LIMIT = privileged ? 25 : 5;
+        let events = [];
+        try { events = JSON.parse(localStorage.getItem(key) || '[]'); } catch {}
+        events = events.filter(t => now - t < DAY);
+        const inHour = events.filter(t => now - t < HOUR).length;
+        const inDay = events.length;
+        if (privileged && inHour >= HOUR_LIMIT) return { ok: false, reason: 'Hourly limit reached (5/hour). Try again later.' };
+        if (inDay >= DAY_LIMIT) return { ok: false, reason: `Daily limit reached (${DAY_LIMIT}/24h). Try again tomorrow.` };
+        return { ok: true, persist: () => { events.push(now); localStorage.setItem(key, JSON.stringify(events)); } };
+      }
+
+      let modalSlotPoll = null;
+      function stopModalSlotPoll() { if (modalSlotPoll) { clearTimeout(modalSlotPoll); modalSlotPoll = null; } }
+
+      async function waitForSlotAndRetryModal(phone, rl) {
+        const banner = document.getElementById('modalBanner');
+        const tick = async () => {
+          try {
+            const r = await fetch(REST_BASE + '/api/dashboard/slot');
+            const j = await r.json();
+            if (j.slot_available) {
+              stopModalSlotPoll();
+              banner.className = 'modal-banner ok show';
+              banner.textContent = 'A demo seat just opened — connecting your call…';
+              await modalPlaceCallOnce(phone, rl, true);
+              return;
+            }
+            banner.className = 'modal-banner show';
+            banner.style.background = 'var(--accent-soft)';
+            banner.style.color = 'var(--accent)';
+            banner.textContent = `All ${j.capacity} demo seats busy (${j.active}/${j.capacity}). We'll auto-start your call when one frees up.`;
+          } catch {}
+          modalSlotPoll = setTimeout(tick, 5000);
+        };
+        modalSlotPoll = setTimeout(tick, 5000);
+      }
+
+      async function modalPlaceCallOnce(phone, rl, fromQueue) {
+        const btn = document.getElementById('modalCallBtn');
+        const banner = document.getElementById('modalBanner');
+        btn.disabled = true;
+        btn.textContent = 'Placing call…';
+        try {
+          const r = await fetch(REST_BASE + '/api/dashboard/trigger-call', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ visitor_phone: phone, persona_id: modalPersonaId }),
+          });
+          const j = await r.json();
+          if (r.status === 503 && j && j.error === 'capacity_full') {
+            banner.className = 'modal-banner show';
+            banner.style.background = 'var(--accent-soft)';
+            banner.style.color = 'var(--accent)';
+            banner.textContent = j.message || 'All demo seats busy — waiting…';
+            waitForSlotAndRetryModal(phone, rl);
+            return;
+          }
+          if (!r.ok) {
+            banner.className = 'modal-banner err show';
+            banner.style.background = '';
+            banner.style.color = '';
+            banner.textContent = (j && (j.message || j.error)) || ('HTTP ' + r.status);
+          } else {
+            rl && rl.persist && rl.persist();
+            banner.className = 'modal-banner ok show';
+            banner.style.background = '';
+            banner.style.color = '';
+            banner.textContent = fromQueue
+              ? 'Calling you now — Aria will start with a greeting.'
+              : 'Calling now. Pick up — Aria will start with a greeting.';
+            connectPanel();
+          }
+        } catch (e) {
+          banner.className = 'modal-banner err show';
+          banner.textContent = 'Network error: ' + e.message;
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Call';
+        }
+      }
+
+      document.getElementById('modalCallBtn').addEventListener('click', async () => {
+        const phone = normalisePhone(document.getElementById('modalPhone').value);
+        const banner = document.getElementById('modalBanner');
+        if (!isValidE164(phone)) {
+          banner.className = 'modal-banner err show';
+          banner.textContent = 'Enter a valid E.164 phone (e.g. +919999900001).';
+          return;
+        }
+        const rl = clientRateOk(phone);
+        if (!rl.ok) {
+          banner.className = 'modal-banner err show';
+          banner.textContent = rl.reason;
+          return;
+        }
+        stopModalSlotPoll();
+        await modalPlaceCallOnce(phone, rl, false);
+      });
+
+      connectPanel();
+      loadAnalytics();
+      loadLive();
+      loadParents();
+      setInterval(loadAnalytics, 15000);
+      setInterval(loadLive, 10000);
+    </script>
+  </body>
+</html>

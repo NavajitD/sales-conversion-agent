@@ -1,0 +1,18 @@
+# Pinned for Cloud Run. Mirror in pyproject.toml.
+fastapi>=0.110
+uvicorn[standard]>=0.27
+python-dotenv>=1.0
+httpx>=0.27
+websockets>=12.0
+pydantic>=2.6
+loguru>=0.7
+python-multipart>=0.0.9
+
+# Firestore
+google-cloud-firestore>=2.16
+google-cloud-secret-manager>=2.20
+
+# Pipecat with Deepgram STT + Sarvam TTS + OpenAI-compatible LLM proxy.
+# (ElevenLabs intentionally removed; see FUTURE.md.) Vobiz transport ships separately.
+pipecat-ai[deepgram,silero,websocket,openai,sarvam]>=0.0.50
+pipecat-vobiz>=0.0.3,<0.1

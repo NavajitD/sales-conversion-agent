@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Aria Voice Agent</title>
+    <meta name="description" content="Experience a voice agent calling you (a parent) after your child's Demo class at Vedantu, gauging your interest and reasoning through objections to close a sale." />
+    <meta name="theme-color" content="#0a1f00" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232563eb'/%3E%3Ctext x='16' y='22' font-family='system-ui,sans-serif' font-size='16' font-weight='700' text-anchor='middle' fill='white'%3EA%3C/text%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://aria-446733252616.asia-south1.run.app" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" /></noscript>
+    <style>
+      :root {
+        --bg: #fafaf9;
+        --fg: #0a1f00;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --accent: #2563eb;
+        --accent-soft: rgba(37, 99, 235, 0.08);
+        --green: #16a34a;
+        --green-soft: rgba(22, 163, 74, 0.1);
+        --red: #dc2626;
+        --red-soft: rgba(220, 38, 38, 0.1);
+        --amber: #d97706;
+        --amber-soft: rgba(217, 119, 6, 0.12);
+        --purple: #7c3aed;
+        --card: #ffffff;
+      }
+      *, *::before, *::after { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+        color: var(--fg);
+        background: var(--bg);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .container { max-width: 64rem; margin: 0 auto; padding: 2rem 1.25rem; }
+      .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+      .logo { font-weight: 700; letter-spacing: -0.01em; font-size: 1.125rem; }
+      .logo span { color: var(--accent); }
+      .nav a { font-size: 0.875rem; color: var(--muted); margin-left: 1.25rem; }
+      .nav a:hover { color: var(--fg); text-decoration: none; }
+
+      h1 { font-size: clamp(1.875rem, 4vw, 2.5rem); line-height: 1.15; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 0.75rem; }
+      .lede { color: var(--muted); font-size: 1.05rem; max-width: 38rem; margin: 0 0 2rem; }
+
+      .step { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; }
+      .step-head { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+      .step-num { width: 1.5rem; height: 1.5rem; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; }
+      .step-title { font-weight: 600; font-size: 1rem; margin: 0; }
+      h2.step-title { font-size: 1rem; line-height: 1.4; letter-spacing: 0; }
+
+      .persona-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.75rem; }
+      .persona { border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem 1rem; cursor: pointer; transition: border-color 0.15s, background 0.15s, transform 0.15s; background: var(--card); }
+      .persona:hover { border-color: var(--accent); transform: translateY(-1px); }
+      .persona.selected { border-color: var(--accent); background: var(--accent-soft); }
+      .persona-name { font-weight: 600; font-size: 0.95rem; }
+      .persona-meta { color: var(--muted); font-size: 0.8rem; margin-top: 0.25rem; }
+
+      .phone-row { display: flex; gap: 0.5rem; align-items: stretch; }
+      .phone-input { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 0.9rem; font-size: 1rem; font-family: inherit; }
+      .phone-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+      .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.1rem; border-radius: 8px; border: none; font-family: inherit; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: opacity 0.15s, transform 0.15s; }
+      .btn-primary { background: var(--accent); color: white; }
+      .btn-primary:hover:not(:disabled) { opacity: 0.92; }
+      .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      .quota { font-size: 0.85rem; color: var(--muted); margin-top: 0.6rem; }
+      .quota.warn { color: var(--amber); font-weight: 500; }
+      .quota.lock { color: var(--red); font-weight: 600; }
+
+      .banner { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.9rem; margin-top: 0.75rem; display: none; }
+      .banner.show { display: block; }
+      .banner.info  { background: var(--accent-soft); color: var(--accent); }
+      .banner.ok    { background: rgba(22, 163, 74, 0.08); color: var(--green); }
+      .banner.err   { background: rgba(220, 38, 38, 0.08); color: var(--red); }
+
+      /* Live Monitoring */
+      .sentiment-row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.75rem; }
+      .confidence-bar { position: relative; flex: 1; min-width: 12rem; height: 1.65rem; background: #f1f5f9; border-radius: 8px; overflow: hidden; }
+      .confidence-fill { position: absolute; inset: 0; width: 0%; transition: width 0.4s ease, background-color 0.3s; background: var(--accent); }
+      .confidence-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 0.7rem; font-size: 0.78rem; font-weight: 600; color: white; mix-blend-mode: difference; text-shadow: 0 0 2px rgba(0,0,0,0.4); }
+      .confidence-fill.s-yes      { background: var(--green); }
+      .confidence-fill.s-soft-no  { background: var(--amber); }
+      .confidence-fill.s-hard-no  { background: var(--red); }
+      .confidence-fill.s-neutral  { background: #94a3b8; }
+      .tone-pill { display: inline-flex; align-items: center; padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.78rem; font-weight: 600; background: rgba(124, 58, 237, 0.1); color: var(--purple); white-space: nowrap; }
+      .tone-pill.empty { background: #f1f5f9; color: var(--muted); }
+
+      .reason-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 0.9rem; margin-bottom: 0.6rem; font-size: 0.88rem; }
+      .reason-box.empty { color: var(--muted); font-style: italic; }
+      .reason-box .label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 0.2rem; }
+      .reason-box.parent { border-left: 3px solid var(--amber); }
+      .reason-box.agent  { border-left: 3px solid var(--green); }
+      .reason-box.conv-parent { border-left: 3px solid var(--green); }
+      .reason-box.conv-agent  { border-left: 3px solid var(--accent); }
+      .reason-box .body { color: var(--fg); }
+
+      .live { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+      @media (min-width: 56rem) { .live { grid-template-columns: 3fr 2fr; } }
+
+      .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; }
+      .panel h3 { margin: 0 0 0.5rem; font-size: 0.95rem; font-weight: 600; }
+      .panel .sub { color: var(--muted); font-size: 0.8rem; margin-bottom: 1rem; }
+      .panel .conn-pill { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; background: #f1f5f9; color: var(--muted); margin-left: 0.5rem; vertical-align: middle; }
+      .conn-pill .dot { width: 6px; height: 6px; border-radius: 999px; background: #cbd5e1; }
+      .conn-pill.live { background: var(--green-soft); color: var(--green); }
+      .conn-pill.live .dot { background: var(--green); animation: pulse 1.5s ease-in-out infinite; }
+      .conn-pill.err { background: var(--red-soft); color: var(--red); }
+      .conn-pill.err .dot { background: var(--red); }
+      @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+      .transcript { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.78rem; line-height: 1.55; max-height: 22rem; overflow-y: auto; padding-right: 0.5rem; }
+      .transcript-empty { color: var(--muted); font-style: italic; padding: 0.5rem 0; font-family: inherit; font-size: 0.85rem; }
+      .transcript-turn { padding: 0.4rem 0; border-bottom: 1px dashed var(--border); }
+      .transcript-turn:last-child { border-bottom: none; }
+      .transcript-who { font-weight: 700; color: var(--muted); margin-right: 0.5rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; }
+      .transcript-who.agent { color: var(--accent); }
+      .transcript-who.parent { color: var(--amber); }
+      .transcript-text { color: var(--fg); }
+
+      /* Pilot Metrics widget */
+      .stat-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+      .stat { background: var(--bg); border-radius: 8px; padding: 0.7rem 0.85rem; }
+      .stat-n { font-weight: 700; font-size: 1.5rem; line-height: 1.1; }
+      .stat-l { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+      .toplist { margin-top: 1rem; }
+      .toplist h4 { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 0.4rem; }
+      .toplist li { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.2rem 0; border-bottom: 1px dashed var(--border); }
+      .toplist li:last-child { border-bottom: none; }
+      .toplist ul { list-style: none; padding: 0; margin: 0; }
+
+      .agent-conf { margin-top: 1rem; }
+      .agent-conf h4 { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 0.4rem; }
+      .agent-conf-bar { position: relative; height: 1.45rem; background: #f1f5f9; border-radius: 8px; overflow: hidden; }
+      .agent-conf-fill { position: absolute; inset: 0; width: 0%; background: var(--accent); transition: width 0.4s ease; }
+      .agent-conf-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white; mix-blend-mode: difference; text-shadow: 0 0 2px rgba(0,0,0,0.4); }
+      .agent-conf-cap { color: var(--muted); font-size: 0.72rem; margin-top: 0.25rem; }
+
+      /* FTUE overlay */
+      .ftue { position: fixed; inset: 0; background: rgba(10, 31, 0, 0.55); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; padding: 1rem; z-index: 50; }
+      .ftue.show { display: flex; }
+      .ftue-card { background: white; border-radius: 14px; max-width: 28rem; padding: 1.75rem; box-shadow: 0 24px 64px rgba(0,0,0,0.15); }
+      .ftue-step { display: none; }
+      .ftue-step.show { display: block; }
+      .ftue-num { color: var(--accent); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+      .ftue-card h2 { margin: 0.25rem 0 0.5rem; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; }
+      .ftue-card p { color: var(--muted); margin: 0 0 1.25rem; }
+      .ftue-actions { display: flex; justify-content: space-between; align-items: center; }
+      .ftue-actions .btn-link { background: none; border: none; color: var(--muted); cursor: pointer; padding: 0; font-family: inherit; font-size: 0.85rem; }
+      .ftue-actions .btn-link:hover { color: var(--fg); }
+      .ftue-dots { display: flex; gap: 6px; }
+      .ftue-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--border); }
+      .ftue-dot.active { background: var(--accent); }
+
+      footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+      footer a { color: var(--muted); margin-right: 1rem; }
+      footer a:hover { color: var(--fg); text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <div class="logo">Aria<span>.</span></div>
+        <nav class="nav">
+          <a href="#how">How it works</a>
+          <a href="https://github.com/NavajitD/sales-conversion-agent" target="_blank" rel="noopener">Repo</a>
+        </nav>
+      </header>
+
+      <main>
+        <h1>AI agent that converts demo experience into sale.</h1>
+        <p class="lede">
+          Pick a parent persona, enter your number, and Aria will call you in
+          Hinglish — gauge the demo, handle objections live, and close to a
+          next step.
+        </p>
+
+        <!-- Step 1: persona -->
+        <section class="step" id="step-persona" aria-labelledby="hd-persona">
+          <div class="step-head">
+            <div class="step-num">1</div>
+            <h2 class="step-title" id="hd-persona">Pick a parent persona</h2>
+          </div>
+          <div class="persona-grid" id="personaGrid">
+            <div class="transcript-empty">Loading personas…</div>
+          </div>
+        </section>
+
+        <!-- Step 2: phone -->
+        <section class="step" id="step-phone" aria-labelledby="hd-phone">
+          <div class="step-head">
+            <div class="step-num">2</div>
+            <h2 class="step-title" id="hd-phone">Enter your number. Aria will call you</h2>
+          </div>
+          <div class="phone-row">
+            <input
+              id="phoneInput"
+              class="phone-input"
+              type="tel"
+              inputmode="tel"
+              placeholder="+91 98XXXXXXXX"
+              aria-label="Your phone number in E.164 format" />
+            <button class="btn btn-primary" id="callBtn" disabled>Call me</button>
+          </div>
+          <div class="quota" id="quota">Up to 5 calls per number, per day.</div>
+          <div class="banner" id="banner" role="status" aria-live="polite"></div>
+        </section>
+
+        <!-- Step 3: Live Monitoring -->
+        <section class="step" id="step-live" aria-labelledby="hd-live">
+          <div class="step-head">
+            <div class="step-num">3</div>
+            <h2 class="step-title" id="hd-live">
+              Monitor call live
+              <span class="conn-pill" id="connPill"><span class="dot"></span><span id="connTxt">Idle</span></span>
+            </h2>
+          </div>
+          <div class="live">
+            <div class="panel">
+              <div class="sub" id="liveSub">No active call. Trigger one above.</div>
+              <div class="sentiment-row">
+                <div class="confidence-bar" id="confBar">
+                  <div class="confidence-fill s-neutral" id="confFill"></div>
+                  <div class="confidence-label">
+                    <span id="confSentiment">—</span>
+                    <span id="confPct">—</span>
+                  </div>
+                </div>
+                <div class="tone-pill empty" id="tonePill">Tone: —</div>
+              </div>
+              <div class="reason-box" id="reasonBox" style="display:none">
+                <div class="label" id="reasonLabel">Reason</div>
+                <div class="body" id="reasonBody"></div>
+              </div>
+              <div class="reason-box" id="responseBox" style="display:none">
+                <div class="label" id="responseLabel">Response</div>
+                <div class="body" id="responseBody"></div>
+              </div>
+              <div class="transcript" id="transcript">
+                <div class="transcript-empty">Transcript will stream here as the call happens.</div>
+              </div>
+            </div>
+
+            <!-- Pilot Metrics -->
+            <div class="panel">
+              <h3>Pilot Metrics</h3>
+              <div class="sub">Across all calls placed by visitors.</div>
+              <div class="stat-row">
+                <div class="stat"><div class="stat-n" id="statTotal">—</div><div class="stat-l">Total calls</div></div>
+                <div class="stat"><div class="stat-n" id="statCompleted">—</div><div class="stat-l">Completed</div></div>
+                <div class="stat"><div class="stat-n" id="statConv">—</div><div class="stat-l">Conv. rate</div></div>
+                <div class="stat"><div class="stat-n" id="statDur">—</div><div class="stat-l">Avg duration</div></div>
+              </div>
+              <div class="toplist">
+                <h4>Top objections</h4>
+                <ul id="topObjections"><li class="transcript-empty">—</li></ul>
+              </div>
+              <div class="agent-conf">
+                <h4>Agent confidence</h4>
+                <div class="agent-conf-bar" id="agentConfBar">
+                  <div class="agent-conf-fill" id="agentConfFill"></div>
+                  <div class="agent-conf-label" id="agentConfLabel">—</div>
+                </div>
+                <div class="transcript-empty" id="agentConfEmpty" style="display:none">No data yet.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Step 4: CRM -->
+        <section class="step" id="step-crm" aria-labelledby="hd-crm">
+          <div class="step-head">
+            <div class="step-num">4</div>
+            <h2 class="step-title" id="hd-crm">Explore the CRM</h2>
+          </div>
+          <p style="color: var(--muted); margin: 0 0 1rem">
+            Live monitoring of active calls, database, analytics, call history, and outcomes.
+          </p>
+          <a class="btn btn-primary" href="/crm.html" target="_blank" rel="noopener">Open CRM →</a>
+        </section>
+
+        <!-- Step 5: How it works -->
+        <section class="step" id="how" aria-labelledby="hd-how">
+          <div class="step-head">
+            <div class="step-num">5</div>
+            <h2 class="step-title" id="hd-how">How it works</h2>
+          </div>
+          <p style="color: var(--muted); margin: 0 0 0.5rem">
+            <a href="https://linkedin.com/in/navjit-debnath-34b1b5191" target="_blank" rel="noopener">Read the LinkedIn post</a>
+            &nbsp;·&nbsp;
+            <a href="https://navajitd.github.io/blog.html" target="_blank" rel="noopener">Read the blog post</a>
+          </p>
+          <details style="margin-top: 0.75rem">
+            <summary style="cursor: pointer; color: var(--accent); font-weight: 600; font-size: 0.9rem; user-select: none;">Spec sheet</summary>
+            <ul style="color: var(--muted); font-size: 0.9rem; line-height: 1.7; margin: 0.75rem 0 0; padding-left: 1.25rem;">
+              <li><strong style="color: var(--fg)">STT</strong> — Deepgram Nova-3 (multi-language Hinglish codemix, interim results, server-side VAD)</li>
+              <li><strong style="color: var(--fg)">TTS</strong> — Sarvam Bulbul v3, speaker <code>simran</code> (Indian-accent Hinglish, low-latency streaming)</li>
+              <li><strong style="color: var(--fg)">LLM</strong> — Key-rotating OpenAI-compatible proxy: Groq llama-4-scout (primary, TTFB ~100 ms) → Groq llama-3.3-70b (nuance fallback + hard-no escalation) → Cerebras gpt-oss-120b → Gemini Flash (opt-in)</li>
+              <li><strong style="color: var(--fg)">Orchestrator</strong> — Pipecat 1.x pipeline with Silero VAD, structured tool calling, and min-words user-turn-start strategy</li>
+              <li><strong style="color: var(--fg)">Telephony</strong> — Vobiz Media Streams (Indian DID, mu-law 8 kHz, per-call answer_url, 1 h Cloud Run timeout for long sessions)</li>
+              <li><strong style="color: var(--fg)">Database</strong> — Firestore (asia-south1) — parents, children, courses, demos, call_attempts + turns subcollection, callbacks, objections, rate limits</li>
+              <li><strong style="color: var(--fg)">Deployment</strong> — Cloud Run (autoscaling, 1 Gi / 1 vCPU, concurrency 8) + Firebase Hosting (Lighthouse 99/100/100/100/100) + Google Secret Manager</li>
+            </ul>
+          </details>
+        </section>
+      </main>
+
+      <footer>
+        <div>
+          <a href="https://navajitd.github.io">navajitd.github.io</a>
+          <a href="https://github.com/NavajitD">GitHub</a>
+          <a href="https://linkedin.com/in/navjit-debnath-34b1b5191">LinkedIn</a>
+        </div>
+        <div>© 2026 Navajit D</div>
+      </footer>
+    </div>
+
+    <!-- FTUE overlay -->
+    <div class="ftue" id="ftue" role="dialog" aria-modal="true" aria-labelledby="ftueTitle">
+      <div class="ftue-card">
+        <div class="ftue-step show" data-step="0">
+          <div class="ftue-num">Step 1 of 3</div>
+          <h2 id="ftueTitle">What is Aria?</h2>
+          <p>A voice AI counsellor that calls parents within hours of their child's free demo class. Built for Vedantu-style EdTech. The agent speaks Hinglish, handles objections live, and lands a concrete next step.</p>
+          <div class="ftue-actions">
+            <button class="btn-link" id="ftueSkip">Skip</button>
+            <div class="ftue-dots"><span class="ftue-dot active"></span><span class="ftue-dot"></span><span class="ftue-dot"></span></div>
+            <button class="btn btn-primary" data-ftue-next>Next →</button>
+          </div>
+        </div>
+        <div class="ftue-step" data-step="1">
+          <div class="ftue-num">Step 2 of 3</div>
+          <h2>You roleplay the parent</h2>
+          <p>Pick one of five seeded personas (parent + child + demo subject). Enter your phone. Aria thinks it's calling that parent — pick up and play along.</p>
+          <div class="ftue-actions">
+            <button class="btn-link" data-ftue-back>← Back</button>
+            <div class="ftue-dots"><span class="ftue-dot"></span><span class="ftue-dot active"></span><span class="ftue-dot"></span></div>
+            <button class="btn btn-primary" data-ftue-next>Next →</button>
+          </div>
+        </div>
+        <div class="ftue-step" data-step="2">
+          <div class="ftue-num">Step 3 of 3</div>
+          <h2>Watch live monitoring</h2>
+          <p>The Live Monitoring panel shows confidence-scored sentiment, parent tone, and (for soft/hard no) the cited objection plus Aria's response. Try a soft "PW sasta hai" or a hard "interest nahi" — see the difference.</p>
+          <div class="ftue-actions">
+            <button class="btn-link" data-ftue-back>← Back</button>
+            <div class="ftue-dots"><span class="ftue-dot"></span><span class="ftue-dot"></span><span class="ftue-dot active"></span></div>
+            <button class="btn btn-primary" id="ftueDone">Got it</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const REST_BASE = '';
+      const WS_BASE = 'wss://aria-446733252616.asia-south1.run.app';
+
+      // ── FTUE ──
+      (function ftue() {
+        const seen = localStorage.getItem('aria_ftue_seen');
+        const root = document.getElementById('ftue');
+        if (!seen) root.classList.add('show');
+        let step = 0;
+        function showStep(n) {
+          document.querySelectorAll('.ftue-step').forEach(el => el.classList.toggle('show', +el.dataset.step === n));
+        }
+        document.querySelectorAll('[data-ftue-next]').forEach(b => b.addEventListener('click', () => showStep(++step)));
+        document.querySelectorAll('[data-ftue-back]').forEach(b => b.addEventListener('click', () => showStep(--step)));
+        function dismiss() { root.classList.remove('show'); localStorage.setItem('aria_ftue_seen', '1'); }
+        document.getElementById('ftueSkip').addEventListener('click', dismiss);
+        document.getElementById('ftueDone').addEventListener('click', dismiss);
+        root.addEventListener('click', (e) => { if (e.target === root) dismiss(); });
+      })();
+
+      let selectedPersonaId = null;
+      let ws = null;
+      let lastAgentUtterance = '';   // we tag the last bot speech as the "response"
+
+      function normalisePhone(raw) {
+        let p = (raw || '').trim().replace(/[\s\-\(\)]/g, '');
+        if (!p) return '';
+        if (!p.startsWith('+')) p = '+' + p.replace(/^0+/, '');
+        return p;
+      }
+      function isValidE164(p) { return /^\+[1-9]\d{6,14}$/.test(p); }
+
+      async function loadPersonas() {
+        const grid = document.getElementById('personaGrid');
+        try {
+          const r = await fetch(REST_BASE + '/api/dashboard/parents');
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const { parents } = await r.json();
+          if (!parents || !parents.length) {
+            grid.innerHTML = '<div class="transcript-empty">No personas seeded yet.</div>';
+            return;
+          }
+          grid.innerHTML = '';
+          parents.forEach(p => {
+            const el = document.createElement('div');
+            el.className = 'persona';
+            el.dataset.id = p.id;
+            el.innerHTML = `
+              <div class="persona-name">${escapeHtml(p.name)}</div>
+              <div class="persona-meta">${escapeHtml(p.child_name || '')}${p.grade ? ' · ' + escapeHtml(p.grade) : ''}</div>
+              <div class="persona-meta">${escapeHtml(p.exam_target || '')}${p.city ? ' · ' + escapeHtml(p.city) : ''}</div>
+            `;
+            el.addEventListener('click', () => selectPersona(p.id, el));
+            grid.appendChild(el);
+          });
+        } catch (e) {
+          grid.innerHTML = '<div class="transcript-empty">Could not load personas (' + e.message + ').</div>';
+        }
+      }
+      function selectPersona(id, el) {
+        selectedPersonaId = id;
+        document.querySelectorAll('.persona').forEach(x => x.classList.toggle('selected', x === el));
+        updateCallButton();
+      }
+
+      // ── Rate limit (rolling window) ──
+      let rateStatus = null;
+      async function refreshRateLimit() {
+        const phone = normalisePhone(document.getElementById('phoneInput').value);
+        const q = document.getElementById('quota');
+        if (!phone || !isValidE164(phone)) {
+          rateStatus = null;
+          q.className = 'quota';
+          q.textContent = 'Up to 5 calls per number, per day.';
+          updateCallButton();
+          return;
+        }
+        try {
+          const r = await fetch(REST_BASE + '/api/dashboard/rate_limit/' + encodeURIComponent(phone));
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          rateStatus = await r.json();
+          renderQuota();
+        } catch (e) {
+          rateStatus = null;
+          q.className = 'quota';
+          q.textContent = 'Up to 5 calls per number, per day.';
+        }
+        updateCallButton();
+      }
+      function renderQuota() {
+        const q = document.getElementById('quota');
+        if (!rateStatus) { q.textContent = 'Up to 5 calls per number, per day.'; q.className = 'quota'; return; }
+        if (rateStatus.whitelisted) { q.textContent = 'Whitelisted — unlimited.'; q.className = 'quota'; return; }
+        // hour_remaining is already clamped to day_remaining server-side, so
+        // the two numbers can never contradict. Show a single effective count
+        // and only break it out by window when the hour cap is the tighter one.
+        const hr = rateStatus.hour_remaining ?? 0;
+        const dr = rateStatus.day_remaining ?? 0;
+        const left = Math.min(hr, dr);
+        if (dr <= 0) {
+          q.textContent = 'Daily limit reached. Try again tomorrow.';
+          q.className = 'quota lock';
+        } else if (hr <= 0) {
+          q.textContent = 'Hourly limit reached. Try again later this hour.';
+          q.className = 'quota lock';
+        } else if (hr < dr) {
+          // Hour is the binding constraint (e.g. privileged numbers).
+          q.textContent = `${hr} more this hour · ${dr} more today.`;
+          q.className = left <= 1 ? 'quota warn' : 'quota';
+        } else {
+          q.textContent = `${left} call${left === 1 ? '' : 's'} left today.`;
+          q.className = left <= 1 ? 'quota warn' : 'quota';
+        }
+      }
+
+      function updateCallButton() {
+        const btn = document.getElementById('callBtn');
+        const phone = normalisePhone(document.getElementById('phoneInput').value);
+        const okPhone = isValidE164(phone);
+        const quotaOk = !rateStatus || rateStatus.whitelisted ||
+          ((rateStatus.hour_remaining ?? 1) > 0 && (rateStatus.day_remaining ?? 1) > 0);
+        btn.disabled = !(selectedPersonaId && okPhone && quotaOk);
+
+        // Re-run the rate-limit text so we never leak a stale hint after
+        // the user satisfies the missing condition.
+        renderQuota();
+
+        // If still disabled, override the quota text with a precise hint.
+        if (btn.disabled) {
+          const q = document.getElementById('quota');
+          if (!selectedPersonaId) {
+            q.textContent = 'Pick a parent persona above before placing the call.';
+            q.className = 'quota warn';
+          } else if (!okPhone) {
+            q.textContent = 'Enter a valid number in E.164 format (e.g. +919999900001).';
+            q.className = 'quota warn';
+          }
+          // quotaOk false case is already shown correctly by renderQuota.
+        }
+      }
+
+      function showBanner(kind, text) {
+        const b = document.getElementById('banner');
+        b.className = 'banner show ' + kind;
+        b.textContent = text;
+      }
+      function hideBanner() { document.getElementById('banner').className = 'banner'; }
+
+      // ── Connection pill ──
+      function setConn(state) {
+        const pill = document.getElementById('connPill');
+        const txt = document.getElementById('connTxt');
+        pill.classList.remove('live', 'err');
+        if (state === 'live') { pill.classList.add('live'); txt.textContent = 'Live'; }
+        else if (state === 'err') { pill.classList.add('err'); txt.textContent = 'Offline'; }
+        else if (state === 'connecting') { txt.textContent = 'Connecting'; }
+        else { txt.textContent = 'Idle'; }
+      }
+
+      // ── Sentiment bucket → UI class + label ──
+      function sentimentBucket(event) {
+        // Map LLM `intent_classification` (positive/soft_no/hard_no/...) to UI buckets.
+        const ic = (event.intent_classification || '').toLowerCase();
+        if (ic.includes('hard_no') || ic === 'no_interest') return { key: 'hard-no', label: 'Hard No' };
+        if (ic.includes('soft_no') || ic.includes('objection')) return { key: 'soft-no', label: 'Soft No' };
+        if (ic === 'positive' || ic === 'enrolled' || ic === 'second_session' || ic === 'callback') return { key: 'yes', label: 'Yes' };
+        return { key: 'neutral', label: ic || '—' };
+      }
+
+      // ── Live Monitoring update from each panel event ──
+      function applyLiveEvent(event) {
+        // 1. Confidence bar + sentiment label
+        const bucket = sentimentBucket(event);
+        const conf = clamp01(Number(event.intent_confidence) || 0);
+        const fill = document.getElementById('confFill');
+        fill.style.width = (conf * 100).toFixed(0) + '%';
+        fill.className = 'confidence-fill s-' + bucket.key;
+        document.getElementById('confSentiment').textContent = bucket.label;
+        document.getElementById('confPct').textContent = (conf * 100).toFixed(0) + '%';
+
+        // 2. Tone pill
+        const tone = (event.tone || '').trim();
+        const tp = document.getElementById('tonePill');
+        if (tone) { tp.textContent = 'Tone: ' + tone; tp.classList.remove('empty'); }
+        else { tp.textContent = 'Tone: —'; tp.classList.add('empty'); }
+
+        // 3. Reason + Response boxes (depend on bucket)
+        const rbox = document.getElementById('reasonBox');
+        const rlbl = document.getElementById('reasonLabel');
+        const rbod = document.getElementById('reasonBody');
+        const sbox = document.getElementById('responseBox');
+        const slbl = document.getElementById('responseLabel');
+        const sbod = document.getElementById('responseBody');
+
+        if (bucket.key === 'yes') {
+          rlbl.textContent = 'Approval reason';
+          slbl.textContent = 'Conclusion';
+          rbox.className = 'reason-box conv-parent'; rbox.style.display = 'block';
+          sbox.className = 'reason-box conv-agent';  sbox.style.display = 'block';
+          rbod.textContent = event.objection_verbatim || event.utterance || 'Parent agreed.';
+          sbod.textContent = event.next_step_label || event.next_step || event.counselor_notes || 'Aria moved to close.';
+        } else if (bucket.key === 'soft-no' || bucket.key === 'hard-no') {
+          rlbl.textContent = 'Objection reason (parent)';
+          slbl.textContent = 'Response (Aria)';
+          rbox.className = 'reason-box parent'; rbox.style.display = 'block';
+          sbox.className = 'reason-box agent';  sbox.style.display = 'block';
+          rbod.textContent = event.objection_verbatim || (event.objection_primary && event.objection_primary !== 'none' ? event.objection_primary : (event.utterance || '—'));
+          const resp = event.strategy_applied && event.strategy_applied !== 'none'
+            ? `[${event.strategy_applied}] ${lastAgentUtterance || ''}`.trim()
+            : (lastAgentUtterance || event.counselor_notes || 'Aria replied.');
+          sbod.textContent = resp;
+        } else {
+          // Neutral / off_topic / ambiguous — show only the boxes that have data
+          if (event.utterance) {
+            rlbl.textContent = 'Reason';
+            rbox.className = 'reason-box parent'; rbox.style.display = 'block';
+            rbod.textContent = event.utterance;
+          }
+          if (lastAgentUtterance) {
+            slbl.textContent = 'Response';
+            sbox.className = 'reason-box agent';  sbox.style.display = 'block';
+            sbod.textContent = lastAgentUtterance;
+          }
+        }
+
+        // 4. Transcript append (parent utterance only — we don't yet receive bot text)
+        if (event.utterance) {
+          appendTranscript('parent', event.utterance);
+        }
+      }
+
+      function appendTranscript(who, text) {
+        const t = document.getElementById('transcript');
+        const empty = t.querySelector('.transcript-empty');
+        if (empty) empty.remove();
+        const div = document.createElement('div');
+        div.className = 'transcript-turn';
+        div.innerHTML = `<span class="transcript-who ${who}">${who === 'agent' ? 'Aria' : 'Parent'}</span><span class="transcript-text">${escapeHtml(text)}</span>`;
+        t.appendChild(div);
+        t.scrollTop = t.scrollHeight;
+      }
+
+      function clamp01(n) { return Math.max(0, Math.min(1, n)); }
+
+      function connectPanel() {
+        if (ws && (ws.readyState === 0 || ws.readyState === 1)) return;
+        setConn('connecting');
+        try { ws = new WebSocket(WS_BASE + '/panel'); }
+        catch (e) {
+          setConn('err');
+          document.getElementById('liveSub').textContent = 'WebSocket unsupported in this browser.';
+          return;
+        }
+        ws.onopen = () => {
+          setConn('live');
+          document.getElementById('liveSub').textContent = 'Connected. Waiting for the call to start…';
+        };
+        ws.onmessage = (ev) => {
+          let payload;
+          try { payload = JSON.parse(ev.data); } catch { return; }
+          // Bot-side text broadcasts use `kind: "agent_speech"` (if we add it later)
+          if (payload && payload.kind === 'agent_speech' && payload.text) {
+            lastAgentUtterance = payload.text;
+            appendTranscript('agent', payload.text);
+            return;
+          }
+          applyLiveEvent(payload);
+        };
+        ws.onerror = () => { setConn('err'); document.getElementById('liveSub').textContent = 'Live connection error.'; };
+        ws.onclose = () => { setConn('err'); document.getElementById('liveSub').textContent = 'Live connection closed.'; };
+      }
+
+      let slotPollTimer = null;
+      function stopSlotPoll() {
+        if (slotPollTimer) { clearTimeout(slotPollTimer); slotPollTimer = null; }
+      }
+      async function waitForSlotAndRetry(phone) {
+        // Poll /api/dashboard/slot every 5s; when a seat opens, re-fire the trigger.
+        const tick = async () => {
+          try {
+            const r = await fetch(REST_BASE + '/api/dashboard/slot');
+            const j = await r.json();
+            if (j.slot_available) {
+              stopSlotPoll();
+              showBanner('info', 'A demo seat just opened — connecting your call now…');
+              await placeCallOnce(phone, /*fromQueue=*/true);
+              return;
+            }
+            showBanner('info', `All ${j.capacity} demo seats are busy (${j.active}/${j.capacity}). We'll auto-start your call when one frees up.`);
+          } catch {}
+          slotPollTimer = setTimeout(tick, 5000);
+        };
+        slotPollTimer = setTimeout(tick, 5000);
+      }
+
+      async function placeCallOnce(phone, fromQueue) {
+        const btn = document.getElementById('callBtn');
+        btn.disabled = true;
+        btn.textContent = 'Placing call…';
+        try {
+          const r = await fetch(REST_BASE + '/api/dashboard/trigger-call', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ visitor_phone: phone, persona_id: selectedPersonaId }),
+          });
+          const j = await r.json();
+          if (r.status === 503 && j && j.error === 'capacity_full') {
+            showBanner('info', j.message || 'All demo seats are busy — waiting for one to free up.');
+            waitForSlotAndRetry(phone);
+            return;
+          }
+          if (!r.ok) {
+            if (r.status === 429) {
+              rateStatus = j.rate_limit || rateStatus;
+              renderQuota();
+              showBanner('err', j.message || 'Rate limit reached.');
+            } else {
+              showBanner('err', j.error || ('HTTP ' + r.status));
+            }
+          } else {
+            rateStatus = j.rate_limit || rateStatus;
+            renderQuota();
+            showBanner('ok', fromQueue
+              ? 'Calling you now — Aria will start with a greeting.'
+              : 'Calling now. Pick up — Aria will start with a greeting.');
+          }
+        } catch (e) {
+          showBanner('err', 'Network error: ' + e.message);
+        } finally {
+          btn.textContent = 'Call me';
+          updateCallButton();
+        }
+      }
+
+      document.getElementById('callBtn').addEventListener('click', async () => {
+        const phone = normalisePhone(document.getElementById('phoneInput').value);
+        // Loud error instead of silent return so it's obvious why nothing happened.
+        if (!selectedPersonaId) {
+          showBanner('err', 'Pick a parent persona at step 1 before placing the call.');
+          return;
+        }
+        if (!isValidE164(phone)) {
+          showBanner('err', 'Enter a valid phone in E.164 format (e.g. +919999900001).');
+          return;
+        }
+        stopSlotPoll();
+        hideBanner();
+        connectPanel();
+        document.getElementById('transcript').innerHTML = '<div class="transcript-empty">Call placed. The phone should ring within ~5–10 seconds.</div>';
+        document.getElementById('liveSub').textContent = 'Placing call…';
+        document.getElementById('confFill').style.width = '0%';
+        document.getElementById('confFill').className = 'confidence-fill s-neutral';
+        document.getElementById('confSentiment').textContent = '—';
+        document.getElementById('confPct').textContent = '—';
+        document.getElementById('tonePill').textContent = 'Tone: —';
+        document.getElementById('tonePill').classList.add('empty');
+        document.getElementById('reasonBox').style.display = 'none';
+        document.getElementById('responseBox').style.display = 'none';
+        lastAgentUtterance = '';
+        await placeCallOnce(phone, false);
+      });
+
+      document.getElementById('phoneInput').addEventListener('input', refreshRateLimit);
+
+      // ── Pilot Metrics ──
+      async function loadAnalytics() {
+        try {
+          const r = await fetch(REST_BASE + '/api/dashboard/analytics');
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const a = await r.json();
+          document.getElementById('statTotal').textContent = a.total_calls ?? 0;
+          document.getElementById('statCompleted').textContent = a.completed_calls ?? 0;
+          document.getElementById('statConv').textContent = (a.conversion_rate ?? 0) + '%';
+          document.getElementById('statDur').textContent = (a.avg_duration_seconds ?? 0) + 's';
+          renderTopList('topObjections', a.top_objections, 'objection_primary');
+          renderAgentConfidence(a);
+        } catch {}
+      }
+      function renderTopList(id, rows, key) {
+        const ul = document.getElementById(id);
+        if (!rows || !rows.length) {
+          ul.innerHTML = '<li class="transcript-empty">No data yet.</li>';
+          return;
+        }
+        ul.innerHTML = rows.slice(0, 5).map(r =>
+          `<li><span>${escapeHtml(r[key] || '—')}</span><span style="color:var(--muted)">${r.n}</span></li>`
+        ).join('');
+      }
+      function renderAgentConfidence(a) {
+        const conf = Number(a.avg_intent_confidence);
+        const bar = document.getElementById('agentConfBar');
+        const empty = document.getElementById('agentConfEmpty');
+        if (Number.isFinite(conf) && conf > 0) {
+          const pct = Math.round(clamp01(conf) * 100);
+          document.getElementById('agentConfFill').style.width = pct + '%';
+          document.getElementById('agentConfLabel').textContent = pct + '%';
+          bar.style.display = '';
+          empty.style.display = 'none';
+        } else {
+          bar.style.display = 'none';
+          empty.style.display = '';
+        }
+      }
+
+      function escapeHtml(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      }
+
+      loadPersonas();
+      loadAnalytics();
+      setInterval(loadAnalytics, 15000);
+      updateCallButton();   // surfaces the "Pick a persona" hint on first load
+    </script>
+  </body>
+</html>

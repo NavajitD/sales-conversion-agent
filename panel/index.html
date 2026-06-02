@@ -3,10 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PS4 — Live Reasoning Panel</title>
+    <meta name="description" content="Aria CRM — Post-demo parent conversion voice agent dashboard for Vedantu counselors" />
+    <meta name="theme-color" content="#020617" />
+    <title>Aria CRM — Post-Demo Parent Conversion</title>
+    <style>
+      /* Critical inline CSS for immediate FCP */
+      body { margin: 0; background: #020617; color: #f1f5f9; font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; }
+      #root:empty::after {
+        content: 'Loading Aria CRM…';
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        font-size: 1.125rem;
+        color: #94a3b8;
+        opacity: 1;
+        animation: fade-in 0.3s ease-in;
+      }
+      @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/main.jsx"></script>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

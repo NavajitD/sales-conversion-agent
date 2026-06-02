@@ -1,4 +1,44 @@
-node_modules/
 .env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+crm.db
+crm.db-*
+node_modules/
+panel/node_modules/
+panel/dist/
+demo/node_modules/
+demo/dist/
 dist/
 .DS_Store
+*.log
+legacy/node_modules/
+
+# Marketing drafts — kept locally, not on GitHub
+BLOG_DRAFT.md
+LINKEDIN_DRAFT.md
+SOCIAL_DRAFTS/
+
+# Build artefacts
+.firebase/
+.cache/
+*.tsbuildinfo
+
+# Local benchmark / Lighthouse outputs
+bench_results/
+voice_ab_clips/
+lighthouse_report*.html
+lighthouse_report*.json
+lighthouse_report*.csv
+
+# Old PDF reports
+lighthouse.pdf

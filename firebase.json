@@ -1,0 +1,38 @@
+{
+  "hosting": {
+    "target": "demo",
+    "public": "demo",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(js|css|svg|woff2|woff|ttf)",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        ]
+      },
+      {
+        "source": "**/*.html",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+        ]
+      }
+    ],
+    "rewrites": [
+      { "source": "/health",                   "run": { "serviceId": "aria", "region": "asia-south1" } },
+      { "source": "/trigger-call",             "run": { "serviceId": "aria", "region": "asia-south1" } },
+      { "source": "/panel",                    "run": { "serviceId": "aria", "region": "asia-south1" } },
+      { "source": "/llm",                      "run": { "serviceId": "aria", "region": "asia-south1" } },
+      { "source": "/llm/**",                   "run": { "serviceId": "aria", "region": "asia-south1" } },
+      { "source": "/vobiz/**",                 "run": { "serviceId": "aria", "region": "asia-south1" } },
+      { "source": "/api/**",                   "run": { "serviceId": "aria", "region": "asia-south1" } }
+    ]
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}

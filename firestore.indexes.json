@@ -1,0 +1,97 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "callbacks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "scheduled_at", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "callbacks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "parent_id", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "scheduled_at", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "callbacks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "scheduled_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "demos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "parent_phone", "order": "ASCENDING" },
+        { "fieldPath": "attended_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "demos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "child_id", "order": "ASCENDING" },
+        { "fieldPath": "course_id", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "call_attempts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "parent_id", "order": "ASCENDING" },
+        { "fieldPath": "started_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "call_attempts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "started_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "objections",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "call_attempt_id", "order": "ASCENDING" },
+        { "fieldPath": "recorded_at", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "objections",
+      "fieldPath": "recorded_at",
+      "indexes": [
+        { "order": "DESCENDING", "queryScope": "COLLECTION" },
+        { "order": "ASCENDING",  "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "turns",
+      "fieldPath": "ts",
+      "indexes": [
+        { "order": "DESCENDING", "queryScope": "COLLECTION_GROUP" },
+        { "order": "ASCENDING",  "queryScope": "COLLECTION_GROUP" },
+        { "order": "DESCENDING", "queryScope": "COLLECTION" },
+        { "order": "ASCENDING",  "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "children",
+      "fieldPath": "child_id",
+      "indexes": [
+        { "order": "ASCENDING",  "queryScope": "COLLECTION_GROUP" },
+        { "order": "ASCENDING",  "queryScope": "COLLECTION" }
+      ]
+    }
+  ]
+}
