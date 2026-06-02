@@ -348,7 +348,7 @@
         <div class="ftue-step" data-step="2">
           <div class="ftue-num">Step 3 of 3</div>
           <h2>Watch live monitoring</h2>
-          <p>The Live Monitoring panel shows confidence-scored sentiment, parent tone, and (for soft/hard no) the cited objection plus Aria's response. Try a soft "PW sasta hai" or a hard "interest nahi" — see the difference.</p>
+          <p>The Live Monitoring panel shows confidence-scored sentiment, parent tone, and (for soft/hard no) the cited objection plus Priya's response. Try a soft "PW sasta hai" or a hard "interest nahi" — see the difference.</p>
           <div class="ftue-actions">
             <button class="btn-link" data-ftue-back>← Back</button>
             <div class="ftue-dots"><span class="ftue-dot"></span><span class="ftue-dot"></span><span class="ftue-dot active"></span></div>
@@ -559,16 +559,16 @@
           rbox.className = 'reason-box conv-parent'; rbox.style.display = 'block';
           sbox.className = 'reason-box conv-agent';  sbox.style.display = 'block';
           rbod.textContent = event.objection_verbatim || event.utterance || 'Parent agreed.';
-          sbod.textContent = event.next_step_label || event.next_step || event.counselor_notes || 'Aria moved to close.';
+          sbod.textContent = event.next_step_label || event.next_step || event.counselor_notes || 'Priya moved to close.';
         } else if (bucket.key === 'soft-no' || bucket.key === 'hard-no') {
           rlbl.textContent = 'Objection reason (parent)';
-          slbl.textContent = 'Response (Aria)';
+          slbl.textContent = 'Response (Priya)';
           rbox.className = 'reason-box parent'; rbox.style.display = 'block';
           sbox.className = 'reason-box agent';  sbox.style.display = 'block';
           rbod.textContent = event.objection_verbatim || (event.objection_primary && event.objection_primary !== 'none' ? event.objection_primary : (event.utterance || '—'));
           const resp = event.strategy_applied && event.strategy_applied !== 'none'
             ? `[${event.strategy_applied}] ${lastAgentUtterance || ''}`.trim()
-            : (lastAgentUtterance || event.counselor_notes || 'Aria replied.');
+            : (lastAgentUtterance || event.counselor_notes || 'Priya replied.');
           sbod.textContent = resp;
         } else {
           // Neutral / off_topic / ambiguous — show only the boxes that have data
@@ -584,10 +584,11 @@
           }
         }
 
-        // 4. Transcript append (parent utterance only — we don't yet receive bot text)
-        if (event.utterance) {
-          appendTranscript('parent', event.utterance);
-        }
+        // Transcript turns now stream from the real STT/agent_speech broadcasts
+        // (kind: "user_transcript" / "agent_speech"), so we no longer append the
+        // LLM's paraphrased `utterance` here — that double-printed and dropped
+        // turns the model didn't echo. log_call_state still drives the analytics
+        // above (confidence, tone, objection/response boxes).
       }
 
       function appendTranscript(who, text) {
@@ -596,7 +597,7 @@
         if (empty) empty.remove();
         const div = document.createElement('div');
         div.className = 'transcript-turn';
-        div.innerHTML = `<span class="transcript-who ${who}">${who === 'agent' ? 'Aria' : 'Parent'}</span><span class="transcript-text">${escapeHtml(text)}</span>`;
+        div.innerHTML = `<span class="transcript-who ${who}">${who === 'agent' ? 'Priya' : 'Parent'}</span><span class="transcript-text">${escapeHtml(text)}</span>`;
         t.appendChild(div);
         t.scrollTop = t.scrollHeight;
       }
@@ -619,10 +620,15 @@
         ws.onmessage = (ev) => {
           let payload;
           try { payload = JSON.parse(ev.data); } catch { return; }
-          // Bot-side text broadcasts use `kind: "agent_speech"` (if we add it later)
+          // Agent's spoken turn (from the LLM, via AgentSpeechBroadcaster).
           if (payload && payload.kind === 'agent_speech' && payload.text) {
             lastAgentUtterance = payload.text;
             appendTranscript('agent', payload.text);
+            return;
+          }
+          // Parent's actual STT turn (real Deepgram transcript, not the LLM's echo).
+          if (payload && payload.kind === 'user_transcript' && payload.text) {
+            appendTranscript('parent', payload.text);
             return;
           }
           applyLiveEvent(payload);

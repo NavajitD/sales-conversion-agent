@@ -131,6 +131,14 @@ class LatencyLogger(FrameProcessor):
                 return  # Don't forward to LLM
             if frame.text:
                 logger.info(f"[latency] STT transcript ready: \"{frame.text[:60]}\"")
+                # Mirror the parent's ACTUAL STT turn to the live panel. Fire-and-
+                # forget (never awaited in the frame path) so the voice pipeline is
+                # never blocked — same pattern as AgentSpeechBroadcaster. This makes
+                # the transcript complete instead of depending on the LLM echoing
+                # each turn back via log_call_state.
+                asyncio.create_task(
+                    _panel_hub.broadcast({"kind": "user_transcript", "text": frame.text})
+                )
 
         elif isinstance(frame, UserStartedSpeakingFrame):
             pass  # Just log, don't use for greeting trigger
