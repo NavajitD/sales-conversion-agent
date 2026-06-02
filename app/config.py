@@ -23,6 +23,13 @@ def _int(name: str, default: int) -> int:
     return int(raw) if raw else default
 
 
+def _bool(name: str, default: bool = False) -> bool:
+    raw = _env(name).lower()
+    if not raw:
+        return default
+    return raw in ("1", "true", "yes", "on")
+
+
 SERVER_HOST = _env("SERVER_HOST", "0.0.0.0")
 SERVER_PORT = _int("SERVER_PORT", 3000)
 PANEL_PORT = _int("PANEL_PORT", 5173)
@@ -34,6 +41,12 @@ DEEPGRAM_API_KEY = _env("DEEPGRAM_API_KEY")
 SARVAM_API_KEY = _env("SARVAM_API_KEY")
 SARVAM_TTS_SPEAKER = _env("SARVAM_TTS_SPEAKER", "simran")
 SARVAM_TTS_MODEL = _env("SARVAM_TTS_MODEL", "bulbul:v3")
+# Replay a small set of pre-rendered short fillers ("जी", "अच्छा"…) from cache
+# instead of re-synthesising them, to cut latency on the acknowledgements the
+# agent uses constantly. OFF by default: it touches the TTS audio path, so it
+# should be validated on a real call before enabling in prod. Same Sarvam voice
+# → no change in how it sounds; any cache miss/error falls back to live TTS.
+TTS_FILLER_CACHE = _bool("TTS_FILLER_CACHE", False)
 
 VOBIZ_AUTH_ID = _env("VOBIZ_AUTH_ID")
 VOBIZ_AUTH_TOKEN = _env("VOBIZ_AUTH_TOKEN")

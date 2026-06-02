@@ -32,6 +32,7 @@ from pipecat.frames.frames import (
     LLMFullResponseEndFrame,
     LLMTextFrame,
     MetricsFrame,
+    TTSAudioRawFrame,
     TTSSpeakFrame,
     TranscriptionFrame,
     UserStartedSpeakingFrame,
@@ -62,6 +63,7 @@ from app.config import (
     SARVAM_TTS_MODEL,
     SARVAM_TTS_SPEAKER,
     SERVER_PORT,
+    TTS_FILLER_CACHE,
     VOBIZ_AUTH_ID,
     VOBIZ_AUTH_TOKEN,
     VOBIZ_L16_ENDIAN,
@@ -176,6 +178,141 @@ def _internal_llm_base_url() -> str:
     return f"http://127.0.0.1:{port}/llm"
 
 
+async def _prewarm_llm() -> None:
+    """Warm the proxy → upstream-LLM connection while the greeting plays.
+
+    The greeting is pre-baked TTS, so the first time the LLM proxy actually
+    talks to Groq is the parent's first reply — paying a cold TLS handshake on
+    the one turn the parent is waiting on. Fire a tiny throwaway completion at
+    call start so the proxy's pooled connection to Groq is hot by turn 1. Pure
+    background task — never awaited on the voice path, failures are ignored.
+    """
+    import httpx
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            await client.post(
+                _internal_llm_base_url() + "/chat/completions",
+                json={
+                    "model": "warmup",
+                    "messages": [{"role": "user", "content": "hi"}],
+                    "max_tokens": 1,
+                    "stream": False,
+                },
+            )
+        logger.info("[llm] prewarm complete")
+    except Exception as e:  # noqa: BLE001
+        logger.debug(f"[llm] prewarm skipped: {e}")
+
+
+class FillerCachingSarvamTTS(SarvamTTSService):
+    """Sarvam TTS that replays a few pre-rendered short fillers from cache.
+
+    The agent repeats tiny acknowledgements constantly ("जी", "अच्छा", "ठीक है").
+    Each one normally pays a full Sarvam synthesis round-trip even though the
+    websocket is already warm. We pre-render a curated set ONCE per process via
+    Sarvam's REST API — same voice / model / sample-rate as the live socket, so
+    the timbre is identical — and replay the cached PCM when the agent's entire
+    turn is exactly one of them.
+
+    Safety: only EXACT (whitespace-trimmed) matches hit the cache; everything
+    else, and any cache miss or error, falls straight through to normal
+    websocket synthesis. So it can never change how a non-filler turn sounds and
+    can never make a turn fail. Gated by config.TTS_FILLER_CACHE (off by default)
+    until validated on a live call.
+    """
+
+    # Curated, prosodically self-contained fillers — the ONLY phrases replayed.
+    FILLERS: tuple[str, ...] = (
+        "जी।", "हाँ जी।", "अच्छा।", "अच्छा जी।",
+        "बिल्कुल।", "ठीक है।", "समझ गई।", "हम्म।",
+    )
+
+    def __init__(self, *args, filler_api_key: str, filler_model: str,
+                 filler_voice: str, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._filler_api_key = filler_api_key
+        self._filler_model = filler_model
+        self._filler_voice = filler_voice
+        self._filler_pcm: dict[str, bytes] = {}
+        self._filler_started = False
+
+    @staticmethod
+    def _norm(text: str) -> str:
+        return (text or "").strip()
+
+    async def start(self, frame) -> None:
+        await super().start(frame)
+        # Pre-render once, off the hot path, after the socket sample-rate is set.
+        if not self._filler_started:
+            self._filler_started = True
+            self.create_task(self._prerender_fillers())
+
+    async def _prerender_fillers(self) -> None:
+        import base64
+        import httpx
+
+        url = "https://api.sarvam.ai/text-to-speech"
+        headers = {
+            "api-subscription-key": self._filler_api_key,
+            "Content-Type": "application/json",
+        }
+        rendered = 0
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                for phrase in dict.fromkeys(self.FILLERS):  # de-dupe, keep order
+                    key = self._norm(phrase)
+                    if not key or key in self._filler_pcm:
+                        continue
+                    try:
+                        r = await client.post(url, headers=headers, json={
+                            "text": phrase,
+                            "target_language_code": "hi-IN",
+                            "speaker": self._filler_voice,
+                            "model": self._filler_model,
+                            "sample_rate": self.sample_rate,
+                        })
+                        if r.status_code != 200:
+                            continue
+                        audios = (r.json() or {}).get("audios") or []
+                        if not audios:
+                            continue
+                        pcm = base64.b64decode(audios[0])
+                        if len(pcm) > 44 and pcm.startswith(b"RIFF"):
+                            pcm = pcm[44:]  # strip WAV header → raw PCM
+                        if pcm:
+                            self._filler_pcm[key] = pcm
+                            rendered += 1
+                    except Exception:  # noqa: BLE001
+                        continue
+        except Exception:  # noqa: BLE001
+            pass
+        logger.info(
+            f"[tts] filler cache ready: {rendered} clip(s) at {self.sample_rate}Hz"
+        )
+
+    async def run_tts(self, text: str, context_id: str):
+        pcm = self._filler_pcm.get(self._norm(text))
+        if pcm:
+            try:
+                logger.debug(f"[tts] filler cache hit: {text!r}")
+                # Context + TTSStartedFrame are created by the base before
+                # run_tts; we just emit the audio (same shape the HTTP Sarvam
+                # path yields), and the base closes it out.
+                yield TTSAudioRawFrame(
+                    audio=pcm,
+                    sample_rate=self.sample_rate,
+                    num_channels=1,
+                    context_id=context_id,
+                )
+                await self.start_tts_usage_metrics(text)
+                return
+            except Exception as e:  # noqa: BLE001
+                logger.warning(f"[tts] filler replay failed, using live TTS: {e}")
+        async for frame in super().run_tts(text, context_id):
+            yield frame
+
+
 def _create_stt_tts(sample_rate: int) -> tuple:
     """Create STT + TTS services. Deepgram Nova-3 STT + Sarvam Bulbul v3 TTS."""
     if not DEEPGRAM_API_KEY:
@@ -193,14 +330,22 @@ def _create_stt_tts(sample_rate: int) -> tuple:
             diarize=False,
         ),
     )
-    tts = SarvamTTSService(
-        api_key=SARVAM_API_KEY,
-        settings=SarvamTTSService.Settings(
-            model=SARVAM_TTS_MODEL,
-            voice=SARVAM_TTS_SPEAKER,
-        ),
+    sarvam_settings = SarvamTTSService.Settings(
+        model=SARVAM_TTS_MODEL,
+        voice=SARVAM_TTS_SPEAKER,
     )
-    logger.info("[stt/tts] Using Deepgram Nova-3 + Sarvam Bulbul v3")
+    if TTS_FILLER_CACHE:
+        tts = FillerCachingSarvamTTS(
+            api_key=SARVAM_API_KEY,
+            settings=sarvam_settings,
+            filler_api_key=SARVAM_API_KEY,
+            filler_model=SARVAM_TTS_MODEL,
+            filler_voice=SARVAM_TTS_SPEAKER,
+        )
+        logger.info("[stt/tts] Using Deepgram Nova-3 + Sarvam Bulbul v3 (filler cache ON)")
+    else:
+        tts = SarvamTTSService(api_key=SARVAM_API_KEY, settings=sarvam_settings)
+        logger.info("[stt/tts] Using Deepgram Nova-3 + Sarvam Bulbul v3")
     return stt, tts, "deepgram+sarvam"
 
 
@@ -239,6 +384,10 @@ async def run_bot(
     parent_phone: str,
     parent_id: str | None = None,
 ) -> None:
+    # Warm the proxy → Groq connection in the background so the parent's first
+    # reply doesn't eat a cold TLS handshake. Runs while the greeting plays.
+    asyncio.create_task(_prewarm_llm())
+
     ctx_data = await _gather_call_context(parent_phone, parent_id)
     parent = ctx_data["parent"]
     child = ctx_data["child"]
