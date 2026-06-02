@@ -74,6 +74,17 @@ so it can never change how a real sentence sounds or make a turn fail. Shipped
 behind a flag (`TTS_FILLER_CACHE`) because it touches the audio path and deserves
 a live-call validation before going on.
 
+**What actually happened (the punchline):** On the validation call the cache
+pre-rendered all 8 clips perfectly, fell back cleanly, added zero latency — and
+hit **zero** times. The agent's *own system prompt* says *"No robotic
+acknowledgements. Vary, and be specific"* and *"end most turns with a question,"*
+so she never utters a bare "जी" or "अच्छा" to match against. The optimization was
+defeated by the personality we deliberately gave her.
+> The best caches exploit repetition. We'd spent the prompt *engineering away*
+> the exact repetition the cache needed. Measure the hit rate before you trust
+> the idea — a clever optimization for behaviour your system doesn't exhibit is
+> just dead code with a nice comment.
+
 ### Where the ~1s turn latency actually goes
 From the logs: end-to-end (speech-end → first audio) ≈ 0.95–1.35s, of which
 Deepgram STT TTFB ≈ 450ms and Groq llama-4-scout TTFB ≈ 100ms. **TTS
