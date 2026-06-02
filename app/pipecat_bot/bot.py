@@ -86,9 +86,17 @@ class AgentSpeechBroadcaster(FrameProcessor):
     Forwards every frame through unchanged.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, on_stuck=None, stuck_threshold: int = 3) -> None:
         super().__init__()
         self._buf: list[str] = []
+        # Repeated-response watchdog: if the agent emits the exact same reply
+        # `stuck_threshold` times in a call, it's almost certainly answering
+        # hold music / an IVR loop (a real conversation never repeats verbatim).
+        # `on_stuck` is an async callback that ends the call gracefully.
+        self._on_stuck = on_stuck
+        self._stuck_threshold = stuck_threshold
+        self._reply_counts: dict[str, int] = {}
+        self._stuck_fired = False
 
     async def process_frame(self, frame, direction: FrameDirection):
         await super().process_frame(frame, direction)
@@ -102,7 +110,19 @@ class AgentSpeechBroadcaster(FrameProcessor):
                 asyncio.create_task(
                     _panel_hub.broadcast({"kind": "agent_speech", "text": text})
                 )
+                self._note_reply(text)
         await self.push_frame(frame, direction)
+
+    def _note_reply(self, text: str) -> None:
+        if self._stuck_fired or not self._on_stuck:
+            return
+        key = text.casefold()
+        n = self._reply_counts.get(key, 0) + 1
+        self._reply_counts[key] = n
+        if n >= self._stuck_threshold:
+            self._stuck_fired = True
+            logger.info("[bot] repeated-response watchdog tripped — ending call")
+            asyncio.create_task(self._on_stuck())
 
 
 class LatencyLogger(FrameProcessor):
@@ -533,6 +553,20 @@ async def run_bot(
     # dropped from the transcript.
     latency_logger = LatencyLogger(call_uuid, greeting_callback=None)
 
+    async def _end_on_stuck():
+        """Backstop for the prompt's hold-handling: if the agent repeats itself
+        (i.e. it's looping on hold music / IVR audio and didn't self-terminate),
+        play one short sign-off and end the call so we don't burn a Cloud Run
+        seat talking to a hold tone."""
+        if _task_ref[0]:
+            await _task_ref[0].queue_frames([
+                TTSSpeakFrame(
+                    text="लगता है आप अभी busy हैं — मैं बाद में दोबारा call कर लूँगी। धन्यवाद!",
+                    append_to_context=False,
+                ),
+                EndTaskFrame(),
+            ])
+
     pipeline = Pipeline(
         [
             transport.input(),
@@ -540,7 +574,7 @@ async def run_bot(
             latency_logger,          # captures STT-done, UserStopped, MetricsFrames, BotStarted
             context_aggregator.user(),
             llm,
-            AgentSpeechBroadcaster(),  # mirrors LLM text to /panel as kind:"agent_speech"
+            AgentSpeechBroadcaster(on_stuck=_end_on_stuck),  # mirrors LLM text to /panel; ends call if it loops
             tts,
             transport.output(),
             context_aggregator.assistant(),

@@ -184,6 +184,22 @@ spoke into a closed pipe and the parent heard silence. The fallback only caught
 for early server-side closes, and make fallbacks trigger on *runtime* failure, not
 just construction failure.
 
+### Your STT will transcribe hold music, and your agent will earnestly reply to it
+**Symptom:** A test call where the parent put the line on hold turned into the
+agent calmly answering the carrier's hold loop — "please stay on the line",
+"hold पर रखा है" — over and over, repeating "मैं लाइन पर हूँ" into the void.
+**Root cause:** Deepgram faithfully transcribes IVR/hold announcements as
+"the user," and the LLM has no reason to think otherwise, so it keeps replying.
+**Fix:** Two layers. (1) Tell the agent in the prompt that hold music / IVR
+recordings / a phrase repeating means the parent stepped away — acknowledge
+once, then offer a callback and `end_call`. (2) A code backstop: if the agent
+emits the *exact same reply* 3× in a call (something a real conversation never
+does), force a graceful sign-off and hang up so we don't pay for a Cloud Run
+seat talking to a dial tone.
+> A voice agent's "user" is whatever the STT heard — not necessarily a human.
+> Anything that can put audio on the line (hold music, IVR, a TV in the room) is
+> an input you have to design for.
+
 ### Make the picker endpoint do only the picker's work
 **Symptom:** Five personas took >8s to load with a single visitor.
 **Root cause:** The picker reused the CRM dashboard endpoint, which hydrates ~4
